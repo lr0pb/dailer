@@ -1,0 +1,43 @@
+{
+  "short_name": "dailer",
+  "name": "dailer",
+  "description": "Plan tasks for the day and analyze how you grow yourself over time. Create wishlist to manage more ambitious tasks",
+  "categories": ["lifestyle", "productivity"],
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "./?from=home",
+  "icons": [
+    { "src": "./icons/favicon.ico", "type": "image/x-icon", "sizes": "32x32" },
+    { "src": "./icons/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "./icons/icon-512-maskable.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "file_handlers": [
+    {
+      "name": "Dailer backup file",
+      "action": "./?from=home&settings=open&section=manageData&popup=uploadBackup",
+      "accept": { "application/vnd.dailer+json": [ ".dailer" ] },
+      "icons": [{ "src": "./icons/apple-touch-icon.png", "sizes": "192x192" }]
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Create new task",
+      "url": "./?from=home&page=taskCreator",
+      "icons": [{ "src": "./icons/addTask.png", "sizes": "192x192" }]
+    }, {
+      "name": "Download a backup",
+      "url": "./?from=home&popup=downloadBackup",
+      "icons": [{ "src": "./icons/downloadBackup.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    { "src": "./screenshots/image1.jpg", "type": "image/jpg", "sizes": "606x1280" },
+    { "src": "./screenshots/image2.jpg", "type": "image/jpg", "sizes": "606x1280" },
+    { "src": "./screenshots/image3.jpg", "type": "image/jpg", "sizes": "606x1280" }
+  ]
+}

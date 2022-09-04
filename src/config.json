@@ -1,0 +1,128 @@
+{
+  "periods": {
+    "01": {
+      "id": "01",
+      "title": "Today only",
+      "days": [1],
+      "periodDay": -1,
+      "special": "oneTime",
+      "selected": true
+    },
+    "02": {
+      "id": "02",
+      "title": "Tomorrow",
+      "days": [1],
+      "startDayShift": 1,
+      "periodDay": -1,
+      "special": "oneTime"
+    },
+    "03": {
+      "id": "03",
+      "title": "Everyday",
+      "days": [1],
+      "selectTitle": "Select day to start",
+      "periodDay": -1,
+      "maxDate": 6
+    },
+    "04": {
+      "id": "04",
+      "title": "Every second day",
+      "days": [1, 0],
+      "selectTitle": "Select day to start",
+      "periodDay": -1,
+      "maxDate": 13
+    },
+    "05": {
+      "id": "05",
+      "title": "Two over two",
+      "days": [1, 1, 0, 0],
+      "selectTitle": "Select day to start",
+      "periodDay": -1,
+      "maxDate": 13
+    },
+    "06": {
+      "id": "06",
+      "title": "On weekdays",
+      "days": [0, 1, 1, 1, 1, 1, 0],
+      "getWeekStart": true
+    },
+    "07": {
+      "id": "07",
+      "title": "Only weekends",
+      "days": [1, 0, 0, 0, 0, 0, 1],
+      "getWeekStart": true
+    },
+    "08": {
+      "id": "08",
+      "title": "One time only",
+      "days": [1],
+      "selectTitle": "Select the day",
+      "periodDay": -1,
+      "special": "oneTime"
+    },
+    "09": {
+      "id": "09",
+      "title": "Until complete",
+      "days": [1],
+      "description": "Task will be active unlimited time until you complete them",
+      "periodDay": -1,
+      "special": "untilComplete"
+    }
+  },
+  "priorities": [{
+    "title": "Can miss sometimes",
+    "color": "blue",
+    "emoji": "moon"
+  }, {
+    "title": "Normal",
+    "color": "yellow",
+    "selected": true
+  }, {
+    "title": "Extra important",
+    "color": "red",
+    "emoji": "fire"
+  }],
+  "startDateOptions": [{
+    "title": "Today",
+    "selected": true
+  }, {
+    "title": "Closest monday"
+  }, {
+    "title": "Custom date"
+  }],
+  "reminderList": [{
+    "title": "Select how often to remind",
+    "disabled": true,
+    "selected": true
+  }, {
+    "title": "Every day",
+    "offset": 1
+  }, {
+    "title": "Every 3 days",
+    "offset": 3
+  }, {
+    "title": "Every week",
+    "offset": 7
+  }, {
+    "title": "Every month",
+    "offset": 28
+  }, {
+    "title": "Every quarter",
+    "offset": 90
+  }, {
+    "title": "Every half year",
+    "offset": 180
+  }, {
+    "title": "Every year",
+    "offset": 365
+  }],
+  "notifications": [{
+    "name": "tasksForDay",
+    "title": "Recap of the day",
+    "enabled": true
+  }, {
+    "name": "backupReminder",
+    "title": "Backup reminders",
+    "enabled": true
+  }]
+}

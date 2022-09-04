@@ -1,5 +1,5 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+# Workflow for deploying dailer to GitHub Pages
+name: Deploy dailer to Pages
 
 on:
   push:
@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Single deploy job since we're just deploying
+  # Build dailer and deploy it
   deploy:
     environment:
       name: github-pages
@@ -29,12 +29,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Build dailer
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'npm'
+        run: |
+          npm ci
+          npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          # Upload entire repository
+          # Upload only build output folder
           path: './out/'
       - name: Deploy to GitHub Pages
         id: deployment
