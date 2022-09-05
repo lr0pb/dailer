@@ -14,4 +14,4 @@ export const database = {
   }
 };
 
-export { IDB } from '../../../IDB.js/out/IDB.module.js' // import IDB from lr0pb/IDB.js repository
+export { IDB } from '../../external/IDB.module.js' // import IDB from lr0pb/IDB.js repository
