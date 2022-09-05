@@ -25,8 +25,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    env:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -36,8 +34,6 @@ jobs:
         with:
           node-version: 16.x
           cache: 'npm'
-      - name: Clone IDB.js
-        run: gh repo clone https://github.com/lr0pb/IDB.js
       - name: Build dailer
         run: |
           npm ci
