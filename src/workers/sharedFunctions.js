@@ -1,13 +1,20 @@
+import {
+  database, IDB,
+  getRawDate, isUnder3AM, oneDay, normalizeDate, getToday, isCustomPeriod,
+  intlDate, getTextDate, setPeriodTitle
+} from './defaultFunctions.js'
+
 let periods = null;
 let session = null;
 
-export async function updatePeriods() {
+export async function updatePeriods(ifNotExist) {
+  if (ifNotExist && periods) return;
   periods = {};
   await db.getAll('periods', (per) => { periods[per.id] = per; });
 }
 
 export async function createDay(today = getToday()) {
-  if (!periods) await updatePeriods();
+  await updatePeriods(true);
   if (!session) session = await db.getItem('settings', 'session');
   if (!session.firstDayEver) session.firstDayEver = today;
   const check = await checkLastDay(today);

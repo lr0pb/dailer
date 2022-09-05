@@ -8,11 +8,13 @@
     "url": "git://github.com/lr0pb/dailer.git"
   },
   "scripts": {
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "dev": "set DEV=1 && set SERVE=1 && rollup -c -w",
+    "serve": "set SERVE=1 && npm run build"
   },
   "devDependencies": {
+    "fast-glob": "^3.2.11",
     "rollup": "^2.79.0",
-    "rollup-plugin-brotli": "^3.1.0",
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-serve": "^2.0.1",
     "rollup-plugin-terser": "^7.0.2"

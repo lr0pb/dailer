@@ -7,15 +7,15 @@ export const onboarding = {
   get header() { return ''},
   get page() { return `
     <div class="content center" data-stage="0">
-      <div id="onboardingBg"></div>
-      <div class="content center doubleColumns" style="position: absolute;">
+      <!--<div id="onboardingBg"></div>-->
+      <div class="content center doubleColumns">
         <h2 class="emoji">${emjs.sparkles}</h2>
         <h2>Welcome to the dailer</h2>
         <h3>Plan tasks for the day and analyze how you grow yourself over time</h3>
       </div>
     </div>
     <div class="content center doubleColumns" data-stage="1">
-      <h2 class="emoji">${emjs.phone}</h2>
+      <h2 class="emoji">${emjs[dailerData.isDesktop ? 'desktop' : 'phone']}</h2>
       <h2>Install dailer</h2>
       <h3>You can choose to run dailer in browser or install it to homescreen</h3>
     </div>
@@ -29,7 +29,7 @@ export const onboarding = {
   noSettings: true,
   get footer() { return `
     <button id="skip" class="secondary noEmoji hidedUI">Skip</button>
-    <button id="action">${emjs.sword} Start dailer</button>
+    <button id="action" data-stage="0">${emjs.sword} Start dailer</button>
   `},
   script: ({globals, page}) => {
     const action = qs('#action');

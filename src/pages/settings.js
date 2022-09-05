@@ -71,7 +71,7 @@ export const settings = {
       <div id="experiments"></div>
       <button id="toDebug" class="secondary">${emjs.construction} Open debug page</button>
       <h2 data-section="about">About</h2>
-      <h3>${emjs.label} dailer app, version 1.5.0</h3>
+      <h3>${emjs.label} dailer app, version {VERSION}</h3>
       <h3 id="emojiCredit">${emjs.sparkles} Emojis powered by <a href="https://github.com/googlefonts/noto-emoji/" target="_blank">Google</a></h3>
       <!--<h3>${emjs.magicBall} Codename: Sangria</h3>-->
       <h3>${emjs.microscope} Developed in 2022</h3>

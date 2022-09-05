@@ -15,7 +15,6 @@ import { checkInstall, onAppInstalled } from './pages/main.js'
 import { registerPeriodicSync, toggleNotifReason } from './pages/settings/notifications.js'
 
 window.addEventListener('unhandledrejection', (e) => {
-  console.error(e.reason);
   showErrorPage(e.reason);
 });
 

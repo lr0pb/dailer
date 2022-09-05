@@ -281,7 +281,7 @@ noscript {
   flex-direction: row;
   scroll-snap-type: x mandatory;
 }
-.slider > * { min-width: 100%; height: 100%; }
+.slider > .content { min-width: 100%; height: 100%; }
 
 #onboardingBg {
   width: var(--fullWidth); height: var(--fullWidth);

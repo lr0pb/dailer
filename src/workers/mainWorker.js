@@ -11,7 +11,6 @@ import {
 db = new IDB(database.name, database.version, database.stores);
 
 self.addEventListener('unhandledrejection', (e) => {
-  console.error(e.reason);
   self.postMessage({ error: `From Worker: ${e.reason}` });
 })
 
@@ -78,7 +77,7 @@ async function checkReminderPromo() {
 async function createTask({
   id, isPageExist, name, period, priority, date, enableEndDate, endDate, wishlist
 }) {
-  if (!periods) await updatePeriods();
+  await updatePeriods(true);
   const td = id ? await db.getItem('tasks', id) : {};
   const per = periods[period];
   const tdPer = td.periodId ? periods[td.periodId] : {};
