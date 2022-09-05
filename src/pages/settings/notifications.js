@@ -59,7 +59,7 @@ export function toggleNotifReason(session, value, globals) {
         await installApp(globals);
         const actualSession = await globals.db.getItem('settings', 'session');
         const actualValue = getNotifPerm(actualSession);
-        setNotifTogglerState(elem, actualValue);
+        setNotifTogglerState(null, actualValue);
         toggleNotifReason(actualSession, actualValue, globals);
       };
     }

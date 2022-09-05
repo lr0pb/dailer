@@ -1,6 +1,5 @@
 import fg from 'fast-glob'
-
-const fs = require('fs');
+import * as fs from 'fs'
 
 const isDev = process.env.DEV;
 

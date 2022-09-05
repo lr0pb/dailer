@@ -1,5 +1,5 @@
 import {
-  database, IDB,
+  env, database, IDB,
   getRawDate, isUnder3AM, oneDay, normalizeDate, getToday, isCustomPeriod,
   intlDate, getTextDate, setPeriodTitle
 } from './workers/defaultFunctions.js'
@@ -141,33 +141,33 @@ async function addCache(request, cacheName) {
 
 self.addEventListener('periodicsync', (e) => {
   console.log(e.tag);
-  db = new IDB(database.name, database.version, database.stores);
+  env.db = new IDB(database.name, database.version, database.stores);
   e.waitUntil(checkNotifications(e.tag));
 });
 
 self.addEventListener('notificationclick', (e) => {
-  db = new IDB(database.name, database.version, database.stores);
+  env.db = new IDB(database.name, database.version, database.stores);
   e.notification.close();
   e.waitUntil(openApp(e.notification));
 });
 
 self.addEventListener('notificationclose', (e) => {
-  db = new IDB(database.name, database.version, database.stores);
+  env.db = new IDB(database.name, database.version, database.stores);
   e.waitUntil(statNotification(e.notification.timestamp, 'close'));
 });
 
 async function statNotification(timestamp, field) {
-  await db.updateItem('settings', 'notifications', (notifs) => {
+  await env.db.updateItem('settings', 'notifications', (notifs) => {
     notifs.callsHistory[timestamp][field] = Date.now();
   });
 }
 
 async function checkNotifications(tag) {
   await addToCache(APP_CACHE, 'files', (data) => data);
-  const notifs = await db.getItem('settings', 'notifications');
-  const periodicSync = await db.getItem('settings', 'periodicSync');
+  const notifs = await env.db.getItem('settings', 'notifications');
+  const periodicSync = await env.db.getItem('settings', 'periodicSync');
   periodicSync.callsHistory.push({ timestamp: Date.now() });
-  await db.setItem('settings', periodicSync);
+  await env.db.setItem('settings', periodicSync);
   if (!notifs.enabled || notifs.permission !== 'granted') return;
   await proccessNotifications(notifs, tag);
 }

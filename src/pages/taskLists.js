@@ -83,10 +83,11 @@ async function renderProgressiveTasksList({globals, page, isBadTask}) {
   page.innerHTML = '';
   const periods = await globals.getPeriods();
   const priorities = await globals.getList('priorities');
-  globals.db.getAll('tasks', (td) => {
+  await globals.db.getAll('tasks', (td) => {
     if (isBadTask(td)) return;
     renderTask({type: 'edit', globals, td, page, periods, priorities});
-  }).then(() => { if (!page.children.length) showNoTasks(page); });
+  });
+  if (!page.children.length) showNoTasks(page);
 }
 
 async function renderSortedTasksList({globals, page, isBadTask, sort}) {
@@ -96,8 +97,7 @@ async function renderSortedTasksList({globals, page, isBadTask, sort}) {
   page.innerHTML = '';
   let prevTask = null, prevTaskId = null;
   const setPrev = (task, id) => { prevTask = task; prevTaskId = id; };
-  if (!tasks.length) { showNoTasks(page); }
-  else for (let i = 0; i < tasks.length; i++) {
+  for (let i = 0; i < tasks.length; i++) {
     // one loop with filtering, sorting and action with data instead of
     // 3 loops for all this actions
     let td = prevTask || tasks[i]; // td stands for task's data

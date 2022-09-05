@@ -115,7 +115,7 @@ async function paintPage(name, {
   }
   container.classList.remove('hided');
   container.classList.add('current');
-  if (!params) params = getParams(`${location.origin}${link}`);
+  if (!params) params = getParams(`${dailerData.nav ? location.origin : ''}${link}`);
   await page.script({ globals, page: content, params });
   globals.isPageReady = true;
 }

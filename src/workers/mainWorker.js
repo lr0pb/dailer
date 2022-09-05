@@ -1,5 +1,5 @@
 import {
-  database, IDB,
+  env, database, IDB,
   getRawDate, isUnder3AM, oneDay, normalizeDate, getToday, isCustomPeriod,
   intlDate, getTextDate, setPeriodTitle
 } from './defaultFunctions.js'
@@ -8,7 +8,7 @@ import {
   getYesterdayRecap, checkBackupReminder
 } from './sharedFunctions.js'
 
-db = new IDB(database.name, database.version, database.stores);
+env.db = new IDB(database.name, database.version, database.stores);
 
 self.addEventListener('unhandledrejection', (e) => {
   self.postMessage({ error: `From Worker: ${e.reason}` });
@@ -35,14 +35,14 @@ const internals = {
 };
 
 async function disableTask(taskId) {
-  await db.updateItem('tasks', taskId, disable);
-  await db.setItem('settings', session);
+  await env.db.updateItem('tasks', taskId, disable);
+  await env.db.setItem('settings', env.session);
 }
 
-function updateSession(item) { session = item; }
+function updateSession(item) { env.session = item; }
 
 async function checkNotifications() {
-  const notifs = await db.getItem('settings', 'notifications');
+  const notifs = await env.db.getItem('settings', 'notifications');
   let show = false;
   for (let i = 0; i < notifs.showPromoLag.length; i++) {
     if (!notifs.firstPromoDay[i]) notifs.firstPromoDay.push(getToday());
@@ -55,19 +55,19 @@ async function checkNotifications() {
     if (!lag(i + 1)) break;
     if (end + lag(i + 1) > getToday()) break;
   }
-  await db.setItem('settings', notifs);
+  await env.db.setItem('settings', notifs);
   return { show };
 }
 
 async function checkReminderPromo() {
   const resp = { show: false };
-  const remind = await db.getItem('settings', 'backupReminder');
+  const remind = await env.db.getItem('settings', 'backupReminder');
   if (remind.knowAboutFeature) return resp;
-  const session = await db.getItem('settings', 'session');
+  const session = await env.db.getItem('settings', 'session');
   if (getToday() < session.firstDayEver + oneDay * remind.dayToStartShowPromo) return resp;
   if (!remind.firstPromoDay) {
     remind.firstPromoDay = getToday();
-    await db.setItem('settings', remind);
+    await env.db.setItem('settings', remind);
   }
   if (remind.firstPromoDay + oneDay * remind.daysToShowPromo <= getToday()) return resp;
   resp.show = true;
@@ -77,10 +77,10 @@ async function checkReminderPromo() {
 async function createTask({
   id, isPageExist, name, period, priority, date, enableEndDate, endDate, wishlist
 }) {
-  await updatePeriods(true);
-  const td = id ? await db.getItem('tasks', id) : {};
-  const per = periods[period];
-  const tdPer = td.periodId ? periods[td.periodId] : {};
+  if (!env.periods) await updatePeriods();
+  const td = id ? await env.db.getItem('tasks', id) : {};
+  const per = env.periods[period];
+  const tdPer = td.periodId ? env.periods[td.periodId] : {};
   const perId = td.periodId || td.ogTitle || per.id;
   const task = {
     id: td.id || Date.now().toString(),

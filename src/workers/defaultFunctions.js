@@ -11,4 +11,8 @@ export {
   getTextDate, setPeriodTitle
 } from '../pages/highLevel/taskThings.js'
 
-let db = null;
+export const env = {
+  db: null,
+  periods: null,
+  session: null,
+};

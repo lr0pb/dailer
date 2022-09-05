@@ -43,7 +43,7 @@ async function processPageBuilding(globals, params) {
 }
 
 export async function renderPage(e, back, globals) {
-  if (!back) renderFirstPage(globals);
+  if (!back) return renderFirstPage(globals);
   const params = getParams();
   if (params.settings == 'open') {
     if (globals.pageName !== params.page) {

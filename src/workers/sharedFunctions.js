@@ -1,22 +1,18 @@
 import {
-  database, IDB,
+  env, database, IDB,
   getRawDate, isUnder3AM, oneDay, normalizeDate, getToday, isCustomPeriod,
   intlDate, getTextDate, setPeriodTitle
 } from './defaultFunctions.js'
 
-let periods = null;
-let session = null;
-
-export async function updatePeriods(ifNotExist) {
-  if (ifNotExist && periods) return;
-  periods = {};
-  await db.getAll('periods', (per) => { periods[per.id] = per; });
+export async function updatePeriods() {
+  env.periods = {};
+  await env.db.getAll('periods', (per) => { env.periods[per.id] = per; });
 }
 
 export async function createDay(today = getToday()) {
-  await updatePeriods(true);
-  if (!session) session = await db.getItem('settings', 'session');
-  if (!session.firstDayEver) session.firstDayEver = today;
+  if (!env.periods) await updatePeriods();
+  if (!env.session) env.session = await env.db.getItem('settings', 'session');
+  if (!env.session.firstDayEver) env.session.firstDayEver = today;
   const check = await checkLastDay(today);
   let tasks = null;
   let previousDay = null;
@@ -25,22 +21,22 @@ export async function createDay(today = getToday()) {
     tasks = resp.tasks;
     await afterDayEnded(resp.day);
   }
-  let day = await db.getItem('days', today.toString());
+  let day = await env.db.getItem('days', today.toString());
   if (!day) {
-    const updateList = session.updateTasksList.map((taskId) => new Promise((res) => {
-      db.updateItem('tasks', taskId, setPeriodTitle).then(res);
+    const updateList = env.session.updateTasksList.map((taskId) => new Promise((res) => {
+      env.db.updateItem('tasks', taskId, setPeriodTitle).then(res);
     }));
     await Promise.all(updateList);
-    session.updateTasksList = [];
+    env.session.updateTasksList = [];
   }
   const cleared = day ? day.cleared : null;
-  if (!day || day.lastTasksChange !== session.lastTasksChange) {
+  if (!day || day.lastTasksChange !== env.session.lastTasksChange) {
     day = getRawDay(today, !day);
   } else return isEmpty(day) ? { day: 'error' } : { day };
   if (cleared) day.cleared = cleared;
   if (!tasks) {
     tasks = [];
-    await db.getAll('tasks', (task) => {
+    await env.db.getAll('tasks', (task) => {
       if (task.disabled || task.deleted ? false : true) tasks.push(task);
     });
   }
@@ -58,21 +54,21 @@ export async function createDay(today = getToday()) {
           addTask(task, 0);
           if (task.special && task.special == 'untilComplete') day.cleared = false;
         }
-        await db.setItem('tasks', task);
+        await env.db.setItem('tasks', task);
       } else if (task.period[task.periodDay]) {
         addTask(task, task.history.at(-1));
       }
     }
   }
-  await db.setItem('days', day);
-  await db.setItem('settings', session);
+  await env.db.setItem('days', day);
+  await env.db.setItem('settings', env.session);
   return day.tasksAmount === 0 ? { day: 'error', tasks } : { day, tasks };
 }
 
 export function getRawDay(date, firstCreation) {
   return {
     date: String(date), tasks: [{}, {}, {}], // 3 objects for 3 priorities
-    completed: false, lastTasksChange: session.lastTasksChange,
+    completed: false, lastTasksChange: env.session.lastTasksChange,
     firstCreation, cleared: true, tasksAmount: 0, completedTasks: 0,
     afterDayEndedProccessed: false
   };
@@ -80,22 +76,22 @@ export function getRawDay(date, firstCreation) {
 
 async function checkLastDay(day) {
   const dayBefore = day - oneDay;
-  const check = session.firstDayEver == day
+  const check = env.session.firstDayEver == day
   ? true
-  : await db.getItem('days', dayBefore.toString());
+  : await env.db.getItem('days', dayBefore.toString());
   return { check, dayBefore };
 }
 
 export function setDefaultPeriodTitle(task) {
   task.periodTitle = isCustomPeriod(task.periodId)
   ? ''
-  : (task.periodId && periods[task.periodId].title) || task.ogTitle || task.periodTitle;
+  : (task.periodId && env.periods[task.periodId].title) || task.ogTitle || task.periodTitle;
 }
 
 export function disable(task) {
   task.periodDay = -1;
   task.disabled = true;
-  session.updateTasksList.push(task.id);
+  env.session.updateTasksList.push(task.id);
   setPeriodTitle(task);
 }
 
@@ -105,7 +101,7 @@ function updateTask(task) {
       disable(task);
     } else if (getToday() == task.periodStart) {
       task.periodDay = 0;
-      setDefaultPeriodTitle(task, periods);
+      setDefaultPeriodTitle(task, env.periods);
       setPeriodTitle(task);
     } else {
       task.periodDay++;
@@ -120,7 +116,7 @@ function updateTask(task) {
     }
     return;
   }
-  setDefaultPeriodTitle(task, periods);
+  setDefaultPeriodTitle(task, env.periods);
   if (task.endDate && task.endDate == getToday()) {
     disable(task);
   }
@@ -160,7 +156,7 @@ export async function afterDayEnded(day) {
     if (value === 1) completedTasks++;
     else pushToForgotten = true;
     if (!day.cleared) {
-      const task = await db.getItem('tasks', id);
+      const task = await env.db.getItem('tasks', id);
       if (task.special && task.special == 'untilComplete' && value === 0) {
         tasksToDelete.push({ priority, id });
         pushToForgotten = false;
@@ -176,18 +172,18 @@ export async function afterDayEnded(day) {
   day.tasksAmount = tasksAmount;
   day.completedTasks = completedTasks;
   day.afterDayEndedProccessed = true;
-  await db.setItem('days', day);
+  await env.db.setItem('days', day);
   return forgottenTasks;
 }
 
 export async function getYesterdayRecap() {
-  const session = await db.getItem('settings', 'session');
+  const session = await env.db.getItem('settings', 'session');
   if (session.recaped == getToday()) return {
     response: { recaped: true }
   };
   const noShowResp = { response: { show: false } };
   const date = getToday() - oneDay;
-  let day = await db.getItem('days', String(date));
+  let day = await env.db.getItem('days', String(date));
   if (!day) {
     const resp = await createDay(date);
     if (resp.day == 'error') return noShowResp;
@@ -200,7 +196,7 @@ export async function getYesterdayRecap() {
     forgottenTasks = await afterDayEnded(day);
     if (!forgottenTasks) return noShowResp;
     day.forgottenTasks = forgottenTasks;
-    await db.setItem('days', day);
+    await env.db.setItem('days', day);
   }
   if (day.tasksAmount === 0) return noShowResp;
   const response = {
@@ -209,13 +205,13 @@ export async function getYesterdayRecap() {
   if (day.completedTasks == day.tasksAmount) {
     day.completed = true;
     response.completed = true;
-    await db.setItem('days', day);
+    await env.db.setItem('days', day);
   }
   return { response, day };
 }
 
 export async function checkBackupReminder() {
-  const remind = await db.getItem('settings', 'backupReminder');
+  const remind = await env.db.getItem('settings', 'backupReminder');
   const resp = { show: false };
   if (!remind.value) return resp;
   if (remind.nextRemind === getToday() && remind.isDownloaded) return resp;
@@ -224,6 +220,6 @@ export async function checkBackupReminder() {
   }
   remind.isDownloaded = false;
   if (remind.nextRemind === getToday()) resp.show = true;
-  await db.setItem('settings', remind);
+  await env.db.setItem('settings', remind);
   return resp;
 };

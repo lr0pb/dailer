@@ -253,6 +253,9 @@ noscript {
   overflow: hidden auto;
   scroll-snap-type: y mandatory;
 }
+.content > .content {
+  width: 100%; height: 100%;
+}
 .content, .hiddenScroll {
   scrollbar-width: none;
 }
@@ -270,11 +273,11 @@ noscript {
   text-align: center;
 }
 .center > h2 { margin: 3rem; }
-.center > * {
+.center > *:not(.content) {
   margin-left: 6rem !important;
   margin-right: 6rem !important;
 }
-.center > *:last-child {
+.center > *:last-child:not(.content) {
   margin-bottom: 3rem !important;
 }
 .slider {
@@ -282,11 +285,11 @@ noscript {
   scroll-snap-type: x mandatory;
 }
 .slider > .content { min-width: 100%; height: 100%; }
+.abs { position: absolute; }
 
 #onboardingBg {
-  width: var(--fullWidth); height: var(--fullWidth);
+  height: var(--fullWidth);
   background-image: radial-gradient(#7070c570, transparent 70%);
-  position: absolute;
 }
 
 body, .content, h1, h2, h3, h4, p, button {

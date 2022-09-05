@@ -5,7 +5,7 @@ import { downloadData } from './highLevel/createBackup.js'
 import { toggleExperiments } from './highLevel/settingsBackend.js'
 import { paintPeriods } from './settings/periods.js'
 import { addBackupReminder, paintBackupReminder } from './settings/backupReminder.js'
-import { addNotifications, fillNotifTopics } from './settings/notifications.js'
+import { addNotifications, toggleNotifReason } from './settings/notifications.js'
 
 export const settings = {
   get title() { return `${emjs.box} Settings`},
@@ -21,6 +21,7 @@ export const settings = {
   },
   paint: async ({globals, page}) => {
     page.innerHTML = `
+      <div id="firstTimeOpeningIdentifier"></div>
       <h2 data-section="periods">Periods</h2>
       <h3 id="periodsText"></h3>
       <div id="periodsContainer" class="first doubleColumns" focusgroup></div>
@@ -105,7 +106,6 @@ export const settings = {
       link.click();
     });
     await addBackupReminder(globals);
-    await addNotifications(globals);
     renderToggler({
       name: `${emjs.experiments} Enable experiments`, id: 'experiments', buttons: [{
         emoji: emjs[dailerData.experiments ? 'sign' : 'blank'],
@@ -123,6 +123,8 @@ export const settings = {
     });
   },
   opening: async ({globals}) => {
+    const isFirstOpening = qs('#firstTimeOpeningIdentifier') ? true : false;
+    if (isFirstOpening) qs('#firstTimeOpeningIdentifier').remove();
     const toRender = {
       periodsContainer: paintPeriods,
       reminderList: paintBackupReminder,
@@ -130,6 +132,7 @@ export const settings = {
     for (let elem in toRender) {
       if (!qs(`#${elem}`).children.length) await toRender[elem](globals);
     }
+    if (isFirstOpening) await addNotifications(globals);
     if (qs('#install').dataset.installed == 'true') {
       const session = await globals.db.getItem('settings', 'session');
       toggleNotifReason(session, null, globals);
