@@ -1,5 +1,5 @@
 # Workflow for deploying dailer to GitHub Pages
-name: Deploy dailer to Pages
+name: Build and deploy dailer
 
 on:
   push:
@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   # Build dailer and deploy it
-  deploy:
+  buildAndDeploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -34,6 +34,8 @@ jobs:
         with:
           node-version: 16.x
           cache: 'npm'
+      - name: Clone IDB.js
+        run: gh repo clone https://github.com/lr0pb/IDB.js
       - name: Build dailer
         run: |
           npm ci

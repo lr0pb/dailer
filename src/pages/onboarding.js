@@ -8,7 +8,12 @@ export const onboarding = {
   noSettings: true,
   styleClasses: 'center',
   get page() { return `
-    <div id="onboardingBg" class="content abs"></div>
+    <div id="onboardingBg" class="content abs center">
+      <div class="content abs circle"></div>
+      <div class="content abs circle"></div>
+      <div class="content abs circle"></div>
+      <div class="content abs circle"></div>
+    </div>
     <div class="content abs slider">
       <div class="content center" data-stage="0">
         <div class="content center doubleColumns">

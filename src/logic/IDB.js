@@ -14,4 +14,9 @@ export const database = {
   }
 };
 
-export { IDB } from '../../external/IDB.module.js' // import IDB from lr0pb/IDB.js repository
+/* first, clone @lr0pb/IDB.js repo to same directory as dailer repo, e.g.:
+* /src
+*   /dailer
+*   /IDB.js
+*/
+export { IDB } from '../../../IDB.js/out/IDB.module.js'
