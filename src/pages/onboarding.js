@@ -38,7 +38,7 @@ export const onboarding = {
     <button id="skip" class="secondary noEmoji hidedUI">Skip</button>
     <button id="action" data-stage="0">${emjs.sword} Start dailer</button>
   `},
-  script: ({globals, page}) => {
+  script: async ({globals, page}) => {
     const action = qs('#action');
     const setStage = (stage, title) => {
       action.dataset.stage = stage;

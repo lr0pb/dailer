@@ -73,11 +73,20 @@ function createDb() {
   if (!globals.db) globals.db = new IDB(database.name, database.version, database.stores);
 }
 
+async function unregisterPreviousSW() {
+  const regs = await navigator.serviceWorker.getRegistrations();
+  for (let reg of regs) {
+    if (!reg.active.scriptURL.includes('/tools')) continue;
+    await reg.unregister();
+  }
+}
+
 async function deployWorkers() {
   const resp = {
     worker: null, periodicSync: { support: false }
   };
   if (!('serviceWorker' in navigator && 'caches' in window)) return resp;
+  await unregisterPreviousSW();
   const reg = await navigator.serviceWorker.register('./sw.js');
   navigator.serviceWorker.onmessage = async (e) => {
     if (typeof e.data !== 'object') return;
@@ -90,7 +99,23 @@ async function deployWorkers() {
   }
   const worker = new Worker('./workers/mainWorker.js');
   worker._callsList = new Map();
-  worker.call = async (call = {}) => {
+  worker.call = setCallListener(worker);
+  worker.onmessage = (e) => {
+    if (e.data.error) return showErrorPage(e.data.error);
+    worker._callsList.set(e.data._id, { data: e.data.data, used: false });
+  };
+  worker.postMessage({isWorkerReady: false});
+  resp.worker = worker;
+  if (!('permissions' in navigator)) return resp;
+  const isPeriodicSyncSupported = 'periodicSync' in reg;
+  resp.periodicSync.support = isPeriodicSyncSupported;
+  if (!isPeriodicSyncSupported) return resp;
+  resp.periodicSync.permission = await registerPeriodicSync(reg);
+  return resp;
+}
+
+function setCallListener(worker) {
+  return async (call = {}) => {
     for (let [key, value] of worker._callsList) {
       if (value.used) worker._callsList.delete(key);
     }
@@ -105,18 +130,6 @@ async function deployWorkers() {
     resp.used = true;
     return resp.data;
   };
-  worker.onmessage = (e) => {
-    if (e.data.error) return showErrorPage(e.data.error);
-    worker._callsList.set(e.data._id, { data: e.data.data, used: false });
-  };
-  worker.postMessage({isWorkerReady: false});
-  resp.worker = worker;
-  if (!('permissions' in navigator)) return resp;
-  const isPeriodicSyncSupported = 'periodicSync' in reg;
-  resp.periodicSync.support = isPeriodicSyncSupported;
-  if (!isPeriodicSyncSupported) return resp;
-  resp.periodicSync.permission = await registerPeriodicSync(reg);
-  return resp;
 }
 
 function getEmojiLink(emoji) {

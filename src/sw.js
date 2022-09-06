@@ -11,10 +11,12 @@ import {
   proccessNotifications, cleaning, showNotification, getDayRecap
 } from './workers/notifications.js'
 
-const APP_CACHE = 'app-14.08';
+const APP_CACHE = 'app-06.09';
 const EMOJI_CACHE = 'emoji-24.07';
-const HTML_TIMEOUT = 670;
-const FILE_TIMEOUT = 340;
+const HUGE_TIMEOUT = 550;
+const SMALL_TIMEOUT = 300;
+
+let USE_CACHE_INSTEAD_NETWORL = false;
 
 if (!('at' in Array.prototype)) {
   function at(n) {
@@ -103,18 +105,19 @@ async function cacheFirst(e, cacheName) {
 }
 
 self.addEventListener('fetch', (e) => {
+  if (e.request.url.includes('/tools')) return;
   if (e.request.url.includes('googlefonts')) {
     return e.respondWith(cacheFirst(e, EMOJI_CACHE));
   }
   if (
-    e.request.url.includes('manifest.json') || e.request.url.includes('screenshots') ||
-    !e.request.url.includes(location.origin)
+    e.request.url.includes('screenshots') || !e.request.url.includes(location.origin)
   ) return;
   e.respondWith(networkFirst(e, APP_CACHE));
 });
 
 async function addCache(request, cacheName) {
   if (!navigator.onLine) return null;
+  if (USE_CACHE_INSTEAD_NETWORL) return null;
   let fetchResponse = null;
   const url = request.url;
   const params = url.match(/(?:\/)([\w\&=\.\?]+)$/);
@@ -123,13 +126,16 @@ async function addCache(request, cacheName) {
     request = new Request(url.replace(params[1], ''));
     isHTML = true;
   }
+  const ext = isHTML ? 'html' : url.match(/(?:.)([\w]+)$/)[1];
+  const timeout = ['html', 'js'].includes(ext) ? HUGE_TIMEOUT : SMALL_TIMEOUT;
   try {
     const response = await Promise.race([
       new Promise((res) => {
-        setTimeout(res, cacheName == EMOJI_CACHE ? 9000 : (isHTML ? HTML_TIMEOUT : FILE_TIMEOUT));
+        setTimeout(res, cacheName == EMOJI_CACHE ? 3000 : timeout);
       }),
       fetch(request)
     ]);
+    if (!response && timeout == HUGE_TIMEOUT) USE_CACHE_INSTEAD_NETWORL = true;
     if (response && response.ok) {
       const cache = await caches.open(cacheName);
       cache.put(request, response.clone());

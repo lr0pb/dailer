@@ -68,9 +68,9 @@ html { font-size: 1.25vmin; }
     --msgBg: #232323;
     --focusBorder: #626262;
     --focusBg: hsl(var(--brand), 59%, 92%);
-    --onboardBg1: #7FA1F7AB;
-    --onboardBg2: #D0F0FDAB;
-    --onboardOpacity: 0.85;
+    --onboardBg1: #7FA1F761;
+    --onboardBg2: #D0F0FD61;
+    --onboardOpacity: 0.65;
   }
 }
 
@@ -285,7 +285,7 @@ noscript {
   margin-left: 6rem !important;
   margin-right: 6rem !important;
 }
-.center > *:last-child:not(.content) {
+.center > *:last-child:not(.content):not(.floatingMsg) {
   margin-bottom: 3rem !important;
 }
 .slider {
