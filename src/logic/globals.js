@@ -259,7 +259,7 @@ export async function showPage(globals, prev, current, noAnim, noCleaning) {
     current.classList.add('showing');
     done = true;
   }
-  noAnim ? addShowing() : setTimeout(addShowing, 10);
+  noAnim ? addShowing() : requestAnimationFrame(addShowing);
   if (!noCleaning) {
     for (let elem of qsa('.hided')) {
       elem.remove();
@@ -272,7 +272,7 @@ export async function showPage(globals, prev, current, noAnim, noCleaning) {
     }
   }
   return new Promise((res) => {
-    const isDone = () => {done ? res() : setTimeout(isDone, 10)};
+    const isDone = () => {done ? res() : setTimeout(isDone, 5)};
     isDone();
   });
 }

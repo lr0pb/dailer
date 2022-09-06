@@ -5,7 +5,6 @@ import { globQs as qs, globQsa as qsa, getParams } from '../pages/highLevel/util
 import { getToday } from '../pages/highLevel/periods.js'
 
 export function getFirstPage(session) {
-  return 'main';
   if (!session.firstDayEver) return 'main';
   if (session.firstDayEver == getToday()) return 'main';
   return session.recaped < getToday() ? 'recap' : 'main';
