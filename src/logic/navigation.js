@@ -85,6 +85,7 @@ export function onAppNavigation(e, globals) {
   console.log(e);
   if (!dailerData.nav) return;
   if (!e.canIntercept && !e.canTransition) return;
+  if (e.destination.url.includes('/tools')) return;
   const info = e.info || {};
   if (info.call === 'hardReload') return 'intercept' in e
   ? e.intercept({ focusReset: 'manual', async handler() { await hardReload(globals, info) } })
@@ -104,7 +105,14 @@ export function onAppNavigation(e, globals) {
 
 async function hardReload(globals, info) {
   const appHistory = navigation.entries();
-  await navigation.traverseTo(appHistory[0].key, {
+  let firstEntry = null;
+  for (let i = 0; i < appHistory.length; i++) {
+    const entry = appHistory[i];
+    if (!entry.url.includes('/tools') && getParams(entry.url).page) {
+      firstEntry = entry; break;
+    }
+  }
+  await navigation.traverseTo(firstEntry.key, {
     info: {call: 'customTraverse'}
   }).finished;
   qs('.hidePrevPage').classList.add('current');
@@ -113,6 +121,8 @@ async function hardReload(globals, info) {
   }
   const session = await globals.db.getItem('settings', 'session');
   await globals.paintPage(info.page || getFirstPage(session), { replaceState: true });
+  await globals.paintPage('reloaded', { noAnim: true });
+  history.back();
 }
 
 export async function onTraverseNavigation(globals, e, silent) {
@@ -128,6 +138,7 @@ export async function onTraverseNavigation(globals, e, silent) {
     const nextIndex = currentIndex + dir;
     const currentParams = getParams(appHistory[currentIndex].url);
     const nextParams = getParams(appHistory[nextIndex].url);
+    if (!nextParams.page) continue;
     const settings = currentParams.settings || nextParams.settings;
     const differentPages = currentParams.page !== nextParams.page;
     if (!silent && dir === -1 && pages[currentParams.page].onBack) {

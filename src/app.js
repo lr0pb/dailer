@@ -6,16 +6,19 @@ import {
   onTraverseNavigation, externalNavigate
 } from './logic/navigation.js'
 import {
-  globQs as qs, checkForFeatures, isDesktop, inert, convertEmoji, getParams,
-  isWideInterface, showErrorPage, platform, isIOS, isMacOS, isSafari, isDoubleColumns
+  globQs as qs, inert, convertEmoji, getParams, showErrorPage, reloadApp
 } from './pages/highLevel/utils.js'
+import {
+  checkForFeatures, isDesktop, isWideInterface, isDoubleColumns,
+  platform, isIOS, isMacOS, isSafari
+} from './logic/environment.js'
 import { getToday, oneDay } from './pages/highLevel/periods.js'
 import { processSettings, toggleExperiments } from './pages/highLevel/settingsBackend.js'
 import { checkInstall, onAppInstalled } from './pages/main.js'
 import { registerPeriodicSync, toggleNotifReason } from './pages/settings/notifications.js'
 
 window.addEventListener('unhandledrejection', (e) => {
-  showErrorPage(e.reason);
+  if (!e.reason.includes('Navigation')) showErrorPage(e.reason);
 });
 
 if (!('at' in Array.prototype)) {
@@ -162,7 +165,14 @@ async function loadEmojiList() {
 
 async function startApp() {
   const appHistory = navigation.entries();
-  appHistory.length <= 1 ? await renderFirstPage(globals) : await restoreApp(appHistory);
+  for (let i = 0; i < appHistory.length; i++) {
+    if (appHistory[i].url.includes('/tools')) {
+      appHistory.splice(i, 1);
+      i--;
+    }
+  }
+  appHistory.length <= 1 || !getParams(appHistory.at(-1).url).page
+  ? await renderFirstPage(globals) : await restoreApp(appHistory);
 }
 
 async function restoreApp(appHistory) {
@@ -170,6 +180,11 @@ async function restoreApp(appHistory) {
   for (let entry of appHistory) {
     dailerData.forcedStateEntry = entry;
     const params = getParams(entry.url);
+    if (!params.page) continue;
+    if (qs(`#${params.page}`)) {
+      await reloadApp(globals);
+      return;
+    }
     const ogPage = params.page;
     if (['main', 'recap'].includes(params.page)) {
       params.page = getFirstPage(session);
@@ -230,7 +245,9 @@ window.addEventListener('beforeinstallprompt', async (e) => {
   const session = await globals.db.updateItem('settings', 'session', (session) => {
     session.installed = false;
   });
-  toggleNotifReason(session, null, globals);
+  if (qs('#settings .content').innerHTML !== '') {
+    toggleNotifReason(session, null, globals);
+  }
   if (qs('#main')) await checkInstall(globals);
 });
 

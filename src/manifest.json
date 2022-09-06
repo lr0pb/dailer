@@ -10,6 +10,8 @@
   "start_url": "./?from=home",
   "icons": [
     { "src": "./icons/favicon.ico", "type": "image/x-icon", "sizes": "32x32" },
+    { "src": "./icons/icon-384.png", "type": "image/png", "sizes": "384x384", "purpose": "any" },
+    { "src": "./icons/icon-384-maskable.png", "type": "image/png", "sizes": "384x384", "purpose": "maskable" },
     { "src": "./icons/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
     { "src": "./icons/icon-512-maskable.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
   ],
