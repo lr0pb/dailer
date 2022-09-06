@@ -126,7 +126,8 @@ async function addCache(request, cacheName) {
     request = new Request(url.replace(params[1], ''));
     isHTML = true;
   }
-  const ext = isHTML ? '.html' : url.match(/.[\w]+$/)[0];
+  const extRegExp = url.match(/.[\w]+$/);
+  const ext = isHTML ? '.html' : extRegExp ? extRegExp[0] : null;
   const timeout = ['.html', '.js'].includes(ext) ? HUGE_TIMEOUT : SMALL_TIMEOUT;
   try {
     const response = await Promise.race([
