@@ -1,6 +1,7 @@
 import { getToday, normalizeDate, oneDay, isCustomPeriod } from './highLevel/periods.js'
 import { getTextDate } from './highLevel/taskThings.js'
-import { qs, hide, getElements, intlDate, syncGlobals } from './highLevel/utils.js'
+import { qs, hide, getElements } from '../utils/dom.js'
+import { syncGlobals } from '../utils/appState.js'
 
 let taskTitle = null;
 
@@ -42,6 +43,7 @@ async function renderTaskInfo({globals, page, params}) {
   const { back, edit } = getElements('back', 'edit');
   back.addEventListener('click', () => history.back());
   syncGlobals(globals);
+  console.log(params);
   if (!globals.pageInfo.taskId) globals.pageInfo.taskId = params.id;
   const task = await globals.db.getItem('tasks', globals.pageInfo.taskId);
   if (!task) {

@@ -1,7 +1,8 @@
 import { pages } from './pages.js'
 import {
-  qs as localQs, globQs as qs, globQsa as qsa, copyArray, inert, getParams
-} from '../pages/highLevel/utils.js'
+  qs as localQs, globQs as qs, globQsa as qsa, copyArray, copyObject, inert
+} from '../utils/dom.js'
+import { getParams } from '../utils/appState.js'
 
 const getPageLink = (name, params = {}, dontClearParams) => {
   const base = dontClearParams ? location.href : location.origin + location.pathname;
@@ -15,6 +16,17 @@ const getPageLink = (name, params = {}, dontClearParams) => {
   const url = new URL(link);
   return dailerData.nav ? url.pathname + url.search : link;
 };
+
+const definedParams = ['from', 'page', 'settings', 'section', 'popup'];
+
+function convertParams(params) {
+  if (!params) return undefined;
+  const cleared = copyObject(params);
+  for (let prop in cleared) {
+    if (definedParams.includes(prop)) delete cleared[prop];
+  }
+  return cleared;
+}
 
 const globals = {
   db: null,
@@ -100,7 +112,7 @@ async function paintPage(name, {
   await showPage(globals, qs('.current'), container, noAnim);
   const args = page.noSettings ? [undefined] : ['click', () => globals.openSettings()];
   container.querySelector('.openSettings')[page.noSettings ? 'remove' : 'addEventListener'](...args);
-  const link = getPageLink(name, params, dontClearParams);
+  const link = getPageLink(name, convertParams(params), dontClearParams);
   if (dailerData.nav) {
     let historyAction = null;
     if (!dontPushHistory) historyAction = 'push';

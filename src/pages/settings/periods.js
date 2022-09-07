@@ -1,4 +1,4 @@
-import { globQs as qs } from '../highLevel/utils.js'
+import { globQs as qs } from '../../utils/dom.js'
 import { renderToggler, toggleFunc } from '../highLevel/taskThings.js'
 import { isCustomPeriod } from '../highLevel/periods.js'
 

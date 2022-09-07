@@ -1,5 +1,5 @@
 import { getToday, normalizeDate, isCustomPeriod } from './periods.js'
-import { globQs as qs, show, hide } from './utils.js'
+import { globQs as qs, show, hide } from '../../utils/dom.js'
 
 export async function downloadData(globals) {
   const prog = qs('.downloadUI');

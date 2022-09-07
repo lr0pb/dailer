@@ -1,7 +1,6 @@
-import {
-  qs, /*emjs,*/ intlDate, handleKeyboard, reloadApp, convertEmoji
-} from './utils.js'
-import { getToday, oneDay, normalizeDate, isCustomPeriod } from './periods.js'
+import { qs, handleKeyboard, convertEmoji } from '../../utils/dom.js'
+import { getToday, oneDay, normalizeDate, isCustomPeriod, intlDate } from './periods.js'
+import { reloadApp } from '../../utils/appState.js'
 
 // req - required
 

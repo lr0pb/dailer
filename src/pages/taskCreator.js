@@ -1,9 +1,9 @@
 import { getToday, convertDate, oneDay, getWeekStart, isCustomPeriod } from './highLevel/periods.js'
 import { editTask, setPeriodTitle, renderToggler, toggleFunc } from './highLevel/taskThings.js'
 import {
-  qs, qsa, copyObject, safeDataInteractions, createOptionsList, syncGlobals, updateState,
-  show, showFlex, hide, getElements, getValue
-} from './highLevel/utils.js'
+  qs, qsa, copyObject, createOptionsList, show, showFlex, hide, getElements, getValue
+} from '../utils/dom.js'
+import { safeDataInteractions, syncGlobals, updateState } from '../utils/appState.js'
 
 let taskTitle = null;
 

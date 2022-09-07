@@ -1,4 +1,5 @@
-import { globQs as qs, globQsa as qsa, intlDate, show, hide } from './utils.js'
+import { globQs as qs, globQsa as qsa, show, hide } from '../../utils/dom.js'
+import { intlDate } from './periods.js'
 import { getToday, oneDay, isCustomPeriod } from './periods.js'
 import { createPeriod } from '../periodCreator.js'
 import { createTask } from '../taskCreator.js'

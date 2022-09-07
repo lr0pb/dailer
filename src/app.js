@@ -2,27 +2,21 @@ import { getGlobals, showPage, hidePage } from './logic/globals.js'
 import { pages } from './logic/pages.js'
 import { IDB, database } from './logic/IDB.js'
 import {
-  getFirstPage, renderFirstPage, renderPage, onHistoryAPIBack, onAppNavigation,
+  renderFirstPage, renderPage, onHistoryAPIBack, onAppNavigation,
   onTraverseNavigation, externalNavigate
 } from './logic/navigation.js'
+import { globQs as qs, inert, convertEmoji } from './utils/dom.js'
 import {
-  globQs as qs, inert, convertEmoji, getParams, showErrorPage, reloadApp
-} from './pages/highLevel/utils.js'
+  showErrorPage, reloadApp, onAppInstalled, getFirstPage, getParams
+} from './utils/appState.js'
 import {
   checkForFeatures, isDesktop, isWideInterface, isDoubleColumns,
   platform, isIOS, isMacOS, isSafari
 } from './logic/environment.js'
 import { getToday, oneDay } from './pages/highLevel/periods.js'
 import { processSettings, toggleExperiments } from './pages/highLevel/settingsBackend.js'
-import { checkInstall, onAppInstalled } from './pages/main.js'
+import { checkInstall } from './pages/main.js'
 import { registerPeriodicSync, toggleNotifReason } from './pages/settings/notifications.js'
-
-window.addEventListener('unhandledrejection', (e) => {
-  try {
-    if (e.reason.includes('Navigation')) return;
-  } catch (err) {}
-  showErrorPage(e.reason);
-});
 
 if (!('at' in Array.prototype)) {
   function at(n) {
@@ -49,6 +43,10 @@ if (!window.dailerData) window.dailerData = {
 checkForFeatures(['inert', 'focusgroup']);
 
 const globals = getGlobals();
+
+window.addEventListener('unhandledrejection', (e) => {
+  showErrorPage(globals, e.reason);
+});
 
 window.addEventListener('pageshow', appEntryPoint);
 
@@ -107,7 +105,7 @@ async function deployWorkers() {
   worker._callsList = new Map();
   worker.call = setCallListener(worker);
   worker.onmessage = (e) => {
-    if (e.data.error) return showErrorPage(e.data.error);
+    if (e.data.error) return showErrorPage(globals, e.data.error);
     worker._callsList.set(e.data._id, { data: e.data.data, used: false });
   };
   worker.postMessage({isWorkerReady: false});
@@ -184,27 +182,21 @@ async function restoreApp(appHistory) {
     dailerData.forcedStateEntry = entry;
     const params = getParams(entry.url);
     if (!params.page) continue;
-    if (qs(`#${params.page}`)) {
+    const isPageExist = qs(`#${params.page}`) ? true : false;
+    if (isPageExist && !params.settings) {
       await reloadApp(globals);
       return;
     }
-    const ogPage = params.page;
     if (['main', 'recap'].includes(params.page)) {
       params.page = getFirstPage(session);
-    }
-    if (ogPage !== params.page) {
-      await globals.paintPage(params.page, { replaceState: true });
-      dailerData.forcedStateEntry = null;
-      await navigation.traverseTo(appHistory[0].key, {
-        info: {call: 'traverseToStart'}
-      }).finished;
-      return;
     }
     if (params.settings) {
       await globals.openSettings(params.section, true);
     } else {
       if (globals.settings) await globals.closeSettings();
-      await globals.paintPage(params.page, { dontPushHistory: true, noAnim: true });
+      if (!isPageExist) await globals.paintPage(params.page, {
+        dontPushHistory: true, noAnim: true, params
+      });
     }
   }
   dailerData.forcedStateEntry = null;

@@ -1,4 +1,4 @@
-import { qs } from './highLevel/utils.js'
+import { qs } from '../utils/dom.js'
 
 export const reloaded = {
   get title() { return `${emjs.construction} dailer technical info page`},

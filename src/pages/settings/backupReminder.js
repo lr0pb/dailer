@@ -1,4 +1,4 @@
-import { globQs as qs, createOptionsList, togglableElement } from '../highLevel/utils.js'
+import { globQs as qs, createOptionsList, togglableElement } from '../../utils/dom.js'
 import { renderToggler, toggleFunc, getTextDate } from '../highLevel/taskThings.js'
 import { getToday, oneDay } from '../highLevel/periods.js'
 

@@ -1,5 +1,5 @@
 import { getToday, oneDay } from './highLevel/periods.js'
-import { qs, qsa, show, hide, getElements } from './highLevel/utils.js'
+import { qs, qsa, show, hide, getElements } from '../utils/dom.js'
 import { renderTask } from './highLevel/taskThings.js'
 
 export const recap = {

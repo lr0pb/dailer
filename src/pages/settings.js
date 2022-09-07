@@ -1,5 +1,5 @@
 import { renderToggler, toggleFunc } from './highLevel/taskThings.js'
-import { globQs as qs, convertEmoji } from './highLevel/utils.js'
+import { globQs as qs, convertEmoji } from '../utils/dom.js'
 import { uploadData } from './highLevel/uploadBackup.js'
 import { downloadData } from './highLevel/createBackup.js'
 import { toggleExperiments } from './highLevel/settingsBackend.js'

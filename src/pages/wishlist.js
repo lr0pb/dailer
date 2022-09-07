@@ -1,15 +1,12 @@
-import { qs } from './highLevel/utils.js'
+import { qs, qsa } from '../utils/dom.js'
 import { renderToggler } from './highLevel/taskThings.js'
 
 export const wishlist = {
   get header() { return `${emjs.star} Your wishlist`},
-  styleClasses: 'doubleColumns',
   get page() { return `
-    <div class="doubleColumns" data-pri="2"></div>
-    <div class="doubleColumns" data-pri="1"></div>
-    <div class="doubleColumns" data-pri="0"></div>
-    <h3 class="hidedUI">Completed wishes</h3>
-    <div class="doubleColumns hidedUI" id="completed"></div>
+    <div id="current" class="doubleColumns"></div>
+    <h2 class="hidedUI">${emjs.party} Completed wishes</h2>
+    <div id="completed" class="doubleColumns first hidedUI"></div>
   `},
   get footer() { return `
     <button id="back" class="secondary">${emjs.back} Back</button>
@@ -27,12 +24,14 @@ async function paintWishlist(globals, page) {
     const base = { name: td.name, id: td.id };
     const text = 'Wish is completed';
     if (td.disabled) return renderToggler({
-      ...base, page: qs('.completed'), buttons: [{
+      ...base, page: qs('#completed'), buttons: [{
         emoji: emjs.sign, title: text, aria: text, func: () => {}
       }]
     });
     renderToggler({
-      ...base, page: qs(`[data-pri="${td.priority}"]`),
+      ...base, page: qs('#current'),
     });
   });
+  if (qs('#completed').innerHTML == '') return;
+  qsa('.hidedUI').forEach((item) => item.classList.remove('hidedUI'));
 }

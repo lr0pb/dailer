@@ -1,4 +1,5 @@
-import { qs, /*emjs,*/ syncGlobals } from './highLevel/utils.js'
+import { qs } from '../utils/dom.js'
+import { syncGlobals } from '../utils/appState.js'
 import { renderTask, showNoTasks } from './highLevel/taskThings.js'
 
 export const planCreator = {

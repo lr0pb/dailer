@@ -106,7 +106,7 @@ async function createTask({
   if (td.name && task.name != td.name) task.nameEdited = true;
   if (td.nameEdited) task.name = td.name;
   if (td.created) task.created = td.created;
-  if (enableEndDate && endDate) task.endDate = endDate;
+  if (enableEndDate == 0 && endDate) task.endDate = endDate;
   if (task.special == 'untilComplete' && wishlist) task.wishlist = wishlist;
   setPeriodTitle(task);
   return task;

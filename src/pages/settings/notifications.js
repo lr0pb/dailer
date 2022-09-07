@@ -1,6 +1,6 @@
-import { globQs as qs, globQsa as qsa } from '../highLevel/utils.js'
+import { globQs as qs, globQsa as qsa } from '../../utils/dom.js'
 import { renderToggler, toggleFunc } from '../highLevel/taskThings.js'
-import { installApp } from '../main.js'
+import { installApp } from '../../utils/appState.js'
 
 export async function isNotificationsAvailable(globals) {
   const periodicSync = await globals.db.getItem('settings', 'periodicSync');

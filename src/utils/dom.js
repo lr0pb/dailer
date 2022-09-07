@@ -51,40 +51,9 @@ export const copyArray = (arr) => {
   return response;
 };
 
-export const intlDate = (date) => {
-  return new Date(typeof date == 'string' ? Number(date) : date)
-    .toLocaleDateString(navigator.language);
-};
-
 export const convertEmoji = (str) => {
   return str.replace(/<span class\="emojiSymbol"[\s\w-:()/;"=.]+>/g, '').replace(/<\/span>/g, '');
 };
-
-export function getParams(url) {
-  const params = {};
-  (url ? new URL(url) : location).search
-    .replace('?', '')
-    .split('&')
-    .forEach((elem) => {
-      const splitted = elem.split('=');
-      params[splitted[0]] = splitted[1];
-    });
-  return params;
-}
-
-export function safeDataInteractions(elems) {
-  const state = dailerData.nav ? navigation.currentEntry.getState() : history.state || {};
-  for (let elem of elems) {
-    if (state[elem]) qs(`#${elem}`).value = state[elem];
-    qs(`#${elem}`).addEventListener('input', stateSave);
-  }
-}
-
-function stateSave(e) {
-  const state = {};
-  state[e.target.id] = e.target.value;
-  updateState(state);
-}
 
 export function createOptionsList(elem, options) {
   if (!elem) return;
@@ -170,47 +139,3 @@ export const inert = {
   _cache: new Map(),
   clearCache(elem) { inert._cache.delete(elem); }
 };
-
-export function syncGlobals(globals) {
-  if (!globals.pageInfo) globals.pageInfo = {};
-  const state = dailerData.nav
-  ? (dailerData.forcedStateEntry || navigation.currentEntry).getState() : copyObject(history.state);
-  Object.assign(globals.pageInfo, state);
-}
-
-export function updateState(updatedStateEntries) {
-  let state = dailerData.nav ? navigation.currentEntry.getState() : copyObject(history.state);
-  if (!state) state = {};
-  for (let key in updatedStateEntries) {
-    state[key] = updatedStateEntries[key];
-  }
-  dailerData.nav ? navigation.updateCurrentEntry({ state }) : history.replaceState(state, '', location.href);
-}
-
-export async function reloadApp(globals, page) {
-  if (!dailerData.nav) {
-    if (globals) await globals.paintPage(page || 'main', { noAnim: true });
-    return location.reload();
-  }
-  await navigation.reload({ info: {call: 'hardReload', page} }).finished;
-}
-
-export function showErrorPage(err) {
-  const elem = document.createElement('div');
-  elem.className = 'page error';
-  elem.innerHTML = `
-    <div class="content center doubleColumns">
-      <h2 class="emoji">${emjs.salute}</h2>
-      <h2>Something really goes wrong</h2>
-      <h3>There is this something: ${err}</h3>
-    </div>
-    <div class="footer">
-      <button>${emjs.reload} Reload app</button>
-    </div>
-  `;
-  qsa('.page').forEach((page) => inert.set(page, true));
-  document.body.append(elem);
-  document.activeElement.blur();
-  elem.querySelector('button').addEventListener('click', async () => await reloadApp());
-  requestAnimationFrame(() => elem.classList.add('showing'));
-}

@@ -25,6 +25,11 @@ export const convertDate = (date) => {
   return new Date(date).toLocaleDateString('en-ca');
 };
 
+export const intlDate = (date) => {
+  return new Date(typeof date == 'string' ? Number(date) : date)
+    .toLocaleDateString(navigator.language);
+};
+
 export function isCustomPeriod(periodId) {
   if (!periodId) return undefined;
   return Number(periodId) > 50;

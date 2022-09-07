@@ -1,14 +1,9 @@
 import { pages } from './pages.js'
 import { popups } from '../pages/popups.js'
 import { showPage, hidePage } from './globals.js'
-import { globQs as qs, globQsa as qsa, getParams } from '../pages/highLevel/utils.js'
+import { globQs as qs, globQsa as qsa } from '../utils/dom.js'
 import { getToday } from '../pages/highLevel/periods.js'
-
-export function getFirstPage(session) {
-  if (!session.firstDayEver) return 'main';
-  if (session.firstDayEver == getToday()) return 'main';
-  return session.recaped < getToday() ? 'recap' : 'main';
-}
+import { getFirstPage, getParams } from '../utils/appState.js'
 
 async function verifyRenderPage(globals, params) {
   const session = await globals.db.getItem('settings', 'session');
@@ -29,7 +24,7 @@ export async function renderFirstPage(globals) {
     await globals.paintPage(rndr, { replaceState: true });
   } else {
     await globals.paintPage(firstPage, { replaceState: true, noAnim: true });
-    await globals.paintPage(rndr);
+    await globals.paintPage(rndr, { params });
   }
   await processPageBuilding(globals, params);
 }
@@ -118,11 +113,7 @@ async function hardReload(globals, info) {
   for (let page of qsa('.page:not(.basic)')) {
     page.remove();
   }
-  const session = await globals.db.getItem('settings', 'session');
   await globals.closeSettings();
-  await globals.paintPage(info.page || getFirstPage(session), { replaceState: true });
-  await globals.paintPage('reloaded', { noAnim: true });
-  history.back();
   qs('#settings > .content').innerHTML = '';
   await pages.settings.paint({globals, page: qs('#settings > .content')});
 }

@@ -1,5 +1,6 @@
 import { isUnder3AM, getToday, oneDay, isCustomPeriod } from './highLevel/periods.js'
-import { qs, globQs } from './highLevel/utils.js'
+import { qs, globQs } from '../utils/dom.js'
+import { installApp } from '../utils/appState.js'
 import { renderTask, setPeriodTitle } from './highLevel/taskThings.js'
 import { downloadData } from './highLevel/createBackup.js'
 import { isNotificationsAvailable, requestNotifications } from './settings/notifications.js'
@@ -123,27 +124,6 @@ export async function checkInstall(globals) {
     });
     return true;
   }
-}
-
-export async function installApp(globals) {
-  globals.installPrompt.prompt();
-  const choice = await globals.installPrompt.userChoice;
-  delete globals.installPrompt;
-  if (choice.outcome === 'accepted' && !('onappinstalled' in window)) {
-    await onAppInstalled(globals);
-  }
-  return choice.outcome === 'accepted';
-}
-
-export async function onAppInstalled(globals) {
-  await globals.db.updateItem('settings', 'session', (session) => {
-    session.installed = true;
-  });
-  const elem = globQs('.floatingMsg[data-id="install"]');
-  if (elem) elem.remove();
-  globQs('#install').style.display = 'none';
-  globQs('#install').dataset.installed = 'true';
-  await processChecks(globals);
 }
 
 async function checkBackupReminder(globals) {

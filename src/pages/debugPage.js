@@ -1,5 +1,6 @@
-import { qs, /*emjs,*/ intlDate, reloadApp } from './highLevel/utils.js'
-import { isCustomPeriod } from './highLevel/periods.js'
+import { qs } from '../utils/dom.js'
+import { reloadApp } from '../utils/appState.js'
+import { isCustomPeriod, intlDate } from './highLevel/periods.js'
 
 export const debugPage = {
   get header() { return `${emjs.construction} Debug page`},

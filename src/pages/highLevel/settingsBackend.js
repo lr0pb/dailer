@@ -1,5 +1,5 @@
 import { database } from '../../logic/IDB.js'
-import { globQs as qs, globQsa as qsa } from './utils.js'
+import { globQs as qs, globQsa as qsa } from '../../utils/dom.js'
 
 export async function processSettings(globals, periodicSync) {
   const session = await globals.db.getItem('settings', 'session');

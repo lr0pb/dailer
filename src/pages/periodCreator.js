@@ -1,8 +1,8 @@
 import { renderToggler, toggleFunc } from './highLevel/taskThings.js'
 import {
-  qs, qsa, globQs, globQsa, /*emjs,*/ safeDataInteractions, handleKeyboard,
-  togglableElement, syncGlobals, copyArray, hide, getValue
-} from './highLevel/utils.js'
+  qs, qsa, globQs, globQsa, handleKeyboard, togglableElement, copyArray, hide, getValue
+} from '../utils/dom.js'
+import { safeDataInteractions, syncGlobals } from '../utils/appState.js'
 import { paintPeriods } from './settings/periods.js'
 
 const maxDays = 7;

@@ -2,11 +2,8 @@ export {
   database, IDB
 } from '../logic/IDB.js'
 export {
-  getRawDate, isUnder3AM, oneDay, normalizeDate, getToday, isCustomPeriod
+  getRawDate, isUnder3AM, oneDay, normalizeDate, getToday, intlDate, isCustomPeriod
 } from '../pages/highLevel/periods.js'
-export {
-  intlDate
-} from '../pages/highLevel/utils.js'
 export {
   getTextDate, setPeriodTitle
 } from '../pages/highLevel/taskThings.js'
