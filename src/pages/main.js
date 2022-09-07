@@ -18,7 +18,9 @@ export const main = {
   script: async ({globals, page}) => {
     qs('#toPlan').addEventListener('click', () => globals.paintPage('planCreator'));
     if (dailerData.experiments) {
-      globals.pageButton({ emoji: emjs.star, title: 'Open wishlist', onClick: () => {} });
+      globals.pageButton({ emoji: emjs.star, title: 'Open wishlist', onClick: async () => {
+        await globals.paintPage('wishlist');
+      } });
     } else {
       qs('#toHistory').style.display = 'none';
     }

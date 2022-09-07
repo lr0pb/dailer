@@ -305,7 +305,7 @@ export async function createTask(globals, td = {}) {
   const isPageExist = qs('#name') ? true : false;
   const e = isPageExist ? getElements('name', 'period', 'priority', 'date', 'endDate') : {};
   const task = await globals.worker.call({ process: 'createTask', args: [{
-    id: td.id, isPageExist, name: isPageExist ? e.name.value : td.name,
+    id: td.id, td, isPageExist, name: isPageExist ? e.name.value : td.name,
     period: isPageExist ? e.period.value : td.periodId,
     priority: isPageExist ? Number(e.priority.value) : td.priority,
     date: isPageExist ? new Date(e.date.value).getTime() : td.periodStart,

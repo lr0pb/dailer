@@ -1,3 +1,4 @@
+import { qs } from './highLevel/utils.js'
 import { renderToggler } from './highLevel/taskThings.js'
 
 export const wishlist = {
@@ -31,7 +32,7 @@ async function paintWishlist(globals, page) {
       }]
     });
     renderToggler({
-      ...base, page: qs(`[data-pri="${td.priority}"]`), 
+      ...base, page: qs(`[data-pri="${td.priority}"]`),
     });
   });
 }

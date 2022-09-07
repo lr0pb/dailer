@@ -119,9 +119,12 @@ async function hardReload(globals, info) {
     page.remove();
   }
   const session = await globals.db.getItem('settings', 'session');
+  await globals.closeSettings();
   await globals.paintPage(info.page || getFirstPage(session), { replaceState: true });
   await globals.paintPage('reloaded', { noAnim: true });
   history.back();
+  qs('#settings > .content').innerHTML = '';
+  await pages.settings.paint({globals, page: qs('#settings > .content')});
 }
 
 export async function onTraverseNavigation(globals, e, silent) {

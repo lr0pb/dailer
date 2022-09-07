@@ -18,7 +18,10 @@ import { checkInstall, onAppInstalled } from './pages/main.js'
 import { registerPeriodicSync, toggleNotifReason } from './pages/settings/notifications.js'
 
 window.addEventListener('unhandledrejection', (e) => {
-  if (!e.reason.includes('Navigation')) showErrorPage(e.reason);
+  try {
+    if (e.reason.includes('Navigation')) return;
+  } catch (err) {}
+  showErrorPage(e.reason);
 });
 
 if (!('at' in Array.prototype)) {

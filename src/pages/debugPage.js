@@ -86,6 +86,9 @@ export async function clearDatabase(globals) {
     if (store == 'settings') continue;
     globals.db.deleteAll(store);
   }
+  await globals.db.updateItem('settings', 'session', (session) => {
+    session.updateTasksList = [];
+  });
   await globals.db.updateItem('settings', 'periods', (periodData) => {
     periodData.list = periodData.defaultList;
     periodData.lastId = periodData.defaultLastId;

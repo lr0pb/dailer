@@ -75,10 +75,9 @@ async function checkReminderPromo() {
 }
 
 async function createTask({
-  id, isPageExist, name, period, priority, date, enableEndDate, endDate, wishlist
+  id, td, isPageExist, name, period, priority, date, enableEndDate, endDate, wishlist
 }) {
   if (!env.periods) await updatePeriods();
-  const td = id ? await env.db.getItem('tasks', id) : {};
   const per = env.periods[period];
   const tdPer = td.periodId ? env.periods[td.periodId] : {};
   const perId = td.periodId || td.ogTitle || per.id;

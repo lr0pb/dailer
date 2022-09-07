@@ -198,7 +198,13 @@ function floatingMsg({id, text, button, longButton, onClick, pageName, notFixed}
       min-width: 1px;
       margin-top: 2rem;
     `;
-    if (!existentDiv) content.append(div);
+    if (!existentDiv) {
+      const isReady = () => {
+        if (globals.isPageReady) return content.append(div);
+        setTimeout(isReady, 10);
+      };
+      isReady();
+    }
   }
   return elem;
 }
