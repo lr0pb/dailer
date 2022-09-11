@@ -40,10 +40,11 @@ export function insertEnvVariables(dir) {
     writeBundle() {
       const fileName = `./${dir}/app.js`;
       const version = process.env.npm_package_version;
+      console.log(isDev);
       const file = fs
         .readFileSync(fileName, 'utf8')
         .replace('{VERSION}', `${version}${isDev ? '-dev' : ''}`)
-        .replace('{IS_DEV}', isDev);
+        .replace(`'{IS_DEV}'`, isDev);
       fs.writeFileSync(fileName, file);
     }
   };

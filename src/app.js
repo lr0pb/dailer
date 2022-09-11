@@ -46,7 +46,7 @@ if (!window.dailerData) Object.defineProperty(window, 'dailerData', {
 checkForFeatures(['inert', 'focusgroup']);
 
 Object.defineProperty(window.dailerData, 'isDev', {
-  value: {IS_DEV}
+  value: '{IS_DEV}'
 });
 
 const globals = getGlobals();
