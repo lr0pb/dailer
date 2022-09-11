@@ -1,4 +1,4 @@
-import { qs, qsa, copyObject } from './dom.js'
+import { qs, qsa, globQs, copyObject } from './dom.js'
 import { getToday } from '../pages/highLevel/periods.js'
 
 export function getParams(url) {
@@ -37,7 +37,6 @@ export async function onAppInstalled(globals) {
   if (elem) elem.remove();
   globQs('#install').style.display = 'none';
   globQs('#install').dataset.installed = 'true';
-  await processChecks(globals);
 }
 
 export function safeDataInteractions(elems) {

@@ -35,7 +35,7 @@ async function onReminderClick({e, elem, globals}) {
   if (value) {
     const remindId = qs('#reminderList').value;
     if (remindId == '0') {
-      toggleFunc({e, elem});
+      toggleFunc({ e: { target: elem.querySelector('button') }, elem });
       globals.message({ state: 'fail', text: 'Select how often to remind you first' });
     } else await onRemindIdChange(globals, remindId);
   } else {

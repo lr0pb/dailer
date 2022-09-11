@@ -1,7 +1,7 @@
 import fg from 'fast-glob'
 import * as fs from 'fs'
 
-const isDev = process.env.DEV;
+const isDev = process.env.DEV ? true : false;
 
 export function cleaner(dir) {
   return {
@@ -42,7 +42,8 @@ export function insertEnvVariables(dir) {
       const version = process.env.npm_package_version;
       const file = fs
         .readFileSync(fileName, 'utf8')
-        .replace('{VERSION}', `${version}${isDev ? '-dev' : ''}`);
+        .replace('{VERSION}', `${version}${isDev ? '-dev' : ''}`)
+        .replace('{IS_DEV}', isDev);
       fs.writeFileSync(fileName, file);
     }
   };

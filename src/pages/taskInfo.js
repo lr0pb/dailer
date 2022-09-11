@@ -43,7 +43,6 @@ async function renderTaskInfo({globals, page, params}) {
   const { back, edit } = getElements('back', 'edit');
   back.addEventListener('click', () => history.back());
   syncGlobals(globals);
-  console.log(params);
   if (!globals.pageInfo.taskId) globals.pageInfo.taskId = params.id;
   const task = await globals.db.getItem('tasks', globals.pageInfo.taskId);
   if (!task) {

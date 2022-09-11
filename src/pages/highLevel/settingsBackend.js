@@ -148,7 +148,7 @@ async function addSession(globals) {
   const resp = await checkRecord(globals, 'session');
   if (resp) {
     if (
-      window.matchMedia('(display-mode: standalone)').matches || navigator.standalone
+      dailerData.isDev || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone
     ) await globals.db.updateItem('settings', 'session', (session) => {
       session.installed = true;
     });

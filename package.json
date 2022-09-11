@@ -1,6 +1,6 @@
 {
   "name": "dailer",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "Plan tasks for the day and analyze how you grow yourself over time. Create wishlist to manage more ambitious tasks",
   "author": "lr0pb",
   "repository": {
@@ -16,6 +16,7 @@
     "fast-glob": "^3.2.11",
     "rollup": "^2.79.0",
     "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-livereload": "^2.0.5",
     "rollup-plugin-serve": "^2.0.1",
     "rollup-plugin-terser": "^7.0.2"
   }

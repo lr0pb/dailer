@@ -132,7 +132,7 @@ html { font-size: 1.25vmin; }
 @media (orientation: portrait) {
   .floatingMsg.notFixed { min-height: 17rem; }
 }
-
+/*
 @media (max-height: 675px) and (orientation: portrait) and (max-aspect-ratio: 12 / 16) {
   :root {
     --defaultFullWidth: 93.2vw;
@@ -141,7 +141,7 @@ html { font-size: 1.25vmin; }
   }
   html { font-size: 1.15vmin; }
 }
-
+*/
 @media (min-width: 470px) {
   :root {
     --fullWidth: 450px;
@@ -261,7 +261,7 @@ noscript {
   overflow: hidden auto;
   scroll-snap-type: y mandatory;
 }
-.content > .content:not(.first) {
+.content:not(#popup) > .content:not(.first) {
   width: 100%; height: 100%;
 }
 .content, .hiddenScroll {

@@ -65,6 +65,13 @@ async function renderDay({globals, page}) {
     }
   }
   if (!dailerData.isDoubleColumns) addTaskButton(globals, page, 'task', 'transparent');
+  if (dailerData.experiments) {
+    const info = document.createElement('h3');
+    info.innerHTML = `
+      cleared: ${day.cleared}, afterDayEndedProccessed: ${day.afterDayEndedProccessed}
+    `;
+    page.append(info);
+  }
   await processChecks(globals);
 }
 

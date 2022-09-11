@@ -30,17 +30,24 @@ if (!('at' in Array.prototype)) {
   });
 }
 
-if (!window.dailerData) window.dailerData = {
-  nav: 'navigation' in window ? true : false,
-  forcePeriodPromo: false,
-  forceReminderPromo: false,
-  platform, isIOS, isMacOS, isSafari,
-  isDesktop: isDesktop(),
-  isWideInterface: isWideInterface(),
-  isDoubleColumns: isDoubleColumns(),
-  experiments: 0,
-};
+if (!window.dailerData) Object.defineProperty(window, 'dailerData', {
+  value: {
+    nav: 'navigation' in window ? true : false,
+    forcePeriodPromo: false,
+    forceReminderPromo: false,
+    platform, isIOS, isMacOS, isSafari,
+    isDesktop: isDesktop(),
+    isWideInterface: isWideInterface(),
+    isDoubleColumns: isDoubleColumns(),
+    experiments: 0,
+  },
+  writable: false,
+});
 checkForFeatures(['inert', 'focusgroup']);
+
+Object.defineProperty(window.dailerData, 'isDev', {
+  value: {IS_DEV}
+});
 
 const globals = getGlobals();
 
