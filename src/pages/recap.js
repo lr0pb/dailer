@@ -8,13 +8,13 @@ export const recap = {
   get page() { return `
     <h2 class="emoji completed">${emjs.party}${emjs.sign}</h2>
     <h2 class="completed" id="congrats">Congratulations! </h2>
-    <h3>You done <span id="tasksCount"></span> tasks yesterday</h3>
+    <h3>You have completed <span id="tasksCount"></span> tasks yesterday</h3>
     <progress id="dayProgress"></progress>
     <h3 class="forgotten">
-      Check the tasks you didn't complete yesterday and if need mark the ones you forgot
+      Check the tasks you didn't complete and if needed mark the ones you forgot
     </h3>
     <div class="forgotten content doubleColumns first" id="tasks" focusgroup="horizontal"></div>
-    <h3 class="forgotten">Tasks with period "One time until complete" not counting as not completed</h3>
+    <h3 class="forgotten">Tasks with period "Until complete" not counting as not completed</h3>
   `},
   get footer() { return `
     <button id="toMain">${emjs.forward} Proceed to today</button>

@@ -18,8 +18,8 @@ export const onboarding = {
       <div class="content center" data-stage="0">
         <div class="content center doubleColumns">
           <h2 class="emoji">${emjs.sparkles}</h2>
-          <h2>Welcome to the dailer</h2>
-          <h3>Plan tasks for the day and analyze how you grow yourself over time</h3>
+          <h2>Welcome to the dailer:<br>day planner</h2>
+          <h3>Plan your tasks and analyze how you grow yourself over time</h3>
         </div>
       </div>
       <div class="content center doubleColumns" data-stage="1">

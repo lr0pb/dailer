@@ -14,6 +14,7 @@ export async function processSettings(globals, periodicSync) {
     addPeriodsSettings(globals)
   ]);
   await globals.db.onDataUpdate('settings', async (store, item) => {
+    if (!item) return;
     if (item.name !== 'session') return;
     await globals.worker.call({ process: 'updateSession', args: item });
   });

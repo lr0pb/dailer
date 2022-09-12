@@ -87,8 +87,8 @@ export function showErrorPage(globals, err) {
   elem.innerHTML = `
     <div class="content center doubleColumns">
       <h2 class="emoji">${emjs.salute}</h2>
-      <h2>Something really goes wrong</h2>
-      <h3>There is this something: ${err}</h3>
+      <h2>Something really went wrong</h2>
+      <h3>${err}</h3>
     </div>
     <div class="footer">
       <button>${emjs.reload} Reload app</button>

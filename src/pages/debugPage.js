@@ -5,13 +5,11 @@ import { isCustomPeriod, intlDate } from './highLevel/periods.js'
 export const debugPage = {
   get header() { return `${emjs.construction} Debug page`},
   get page() { return `
-    <h2>${emjs.fire} Warning</h2>
-    <h3>Data below is no more represantable due to move to using inside the app better structured place to save data. Debug page will be updated later</h3>
     <div id="dataContainer" class="doubleColumns"></div>
     <div class="doubleColumns">
       <div class="content">
         <button id="clear" class="danger noEmoji">Clear your data</button>
-        <h3>It's actually delete all your tasks and other. Make sure you have backup</h3>
+        <h3>It actually clears all your data. Make sure you have backup</h3>
       </div>
       <div class="content">
         <!--<button id="toRecap" class="noEmoji">Show recap page</button>
@@ -71,7 +69,10 @@ async function renderPage({globals, page}) {
   qs('#clearSettings').addEventListener('click', async () => {
     //await globals.db.deleteAll('settings');
     await globals.db.deleteItem('settings', 'notifications');
-    await reloadApp(globals);
+    await globals.db.updateItem('settings', 'session', (session) => {
+      session.onboarded = false;
+    });
+    await reloadApp(globals, 'onboarding');
   });
 }
 

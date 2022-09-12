@@ -120,15 +120,15 @@ export function showNoTasks(page) {
   page.innerHTML = `
     <h2 class="emoji">${isArchive ? emjs.book : emjs.empty}</h2>
     <h2>${isArchive
-    ? 'When tasks expired or you disable them, they will get here'
-    : 'There is no tasks right now!'}</h2>
+    ? 'When tasks become expired or disabled, they will be shown here'
+    : 'There are no active tasks right now!'}</h2>
   `;
 }
 
 export async function editTask({globals, id, field, onConfirm}) {
   const td = await globals.db.getItem('tasks', id);
   globals.openPopup({
-    text: `Are you sure to ${field.replace(/\w$/, '')} this task?`,
+    text: `Do you really want to ${field.replace(/\w$/, '')} this task?`,
     emoji: emjs[field == 'deleted' ? 'trashCan' : 'disabled'],
     action: async () => {
       td[field] = true;

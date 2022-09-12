@@ -85,7 +85,7 @@ async function renderTaskInfo({globals, page, params}) {
       <h2>Stats</h2>
       <div class="content center">
         <h2 class="emoji">${emjs.empty}</h2>
-        <h3>Stats will be available as soon as you running this task for 2 weeks</h3>
+        <h3>Stats will be available after you run this task for 2 weeks</h3>
       </div>` : ''
     }${!iha ? '' : `
       <h2>History</h2>
@@ -132,7 +132,7 @@ function renderItemsHolder({task, periods, priorities, iha}) {
     if (quickStats.completed == quickStats.amount) quickStats.done = true;
     createInfoRect(
       emjs[quickStats.done ? 'party' : 'chartUp'],
-      `In last 7 days you done task ${quickStats.completed}/${quickStats.amount} times`,
+      `In last 7 days you complete task ${quickStats.completed}/${quickStats.amount} times`,
       quickStats.done ? 'green' : 'blue'
     );
   }

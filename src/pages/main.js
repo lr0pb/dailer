@@ -157,7 +157,9 @@ async function checkReminderPromo(globals) {
   }
   globals.floatingMsg({
     id: 'reminderPromo',
-    text: `${emjs.light} You can be safe with your data by creating backups periodically`,
+    text: `${emjs.light} Protect your data${
+      dailerData.isDoubleColumns ? ' ' : '<br>'
+    }by creating backups periodically`,
     button: 'View', longButton: `${emjs.settings}&nbsp;View&nbsp;settings`,
     pageName: 'main',
     onClick: async (e) => {
@@ -179,7 +181,7 @@ async function checkNotifications(globals) {
   if (!show) return;
   globals.floatingMsg({
     id: 'notifications',
-    text: `${emjs.bell} Get a daily overview of tasks through notifications`,
+    text: `${emjs.bell} Get a daily tasks overview through notifications`,
     button: 'Turn&nbsp;on', longButton: `${emjs.alarmClock}&nbsp;Turn&nbsp;it&nbsp;on`,
     pageName: 'main',
     onClick: async (e) => {

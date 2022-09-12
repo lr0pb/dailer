@@ -25,11 +25,11 @@ export const settings = {
       <h2 data-section="periods">Periods</h2>
       <h3 id="periodsText"></h3>
       <div id="periodsContainer" class="first doubleColumns" focusgroup></div>
-      <h3>Create your own period for specific task performance</h3>
+      <h3>Create your own periods for specific task performance</h3>
       <button id="toPeriodCreator">${emjs.calendar} Create custom period</button>
       <h2 data-section="manageData">Data management</h2>
       <div class="floatingMsg notFixed">
-        <h3>${emjs.lockWKey} Your data is stored only on your device and have no remote access</h3>
+        <h3>${emjs.lockWKey} Your data stored on your device and cannot be remotely accessed</h3>
       </div>
       <div class="doubleColumns">
         <div class="content">
@@ -59,7 +59,7 @@ export const settings = {
       </div>
       <style class="notifStyle"></style>
       <h2 data-section="notifications" class="notif">Notifications</h2>
-      <h3 class="notif">Turn on notifications about in-app things to better manage tasks</h3>
+      <h3 class="notif">Turn on notifications about in-app activities to improve task management</h3>
       <div class="floatingMsg notFixed notif">
         <h3>${emjs.paperList} Notifications will arrive in a bundle only once a day</h3>
       </div>
@@ -93,7 +93,9 @@ export const settings = {
       qs('#share').parentElement.remove();
     } else qs('#share').addEventListener('click', () => {
       navigator.share({
-        title: 'dailer \u{2705}', text: 'Check what is the dailer \u{1f642}', url: location.origin + location.pathname
+        title: 'dailer \u{2705}',
+        text: 'Check what is the dailer \u{1f642}',
+        url: location.origin + location.pathname
       }).catch((err) => {
         console.log('Share was cancelled');
       });
@@ -115,7 +117,7 @@ export const settings = {
             session.experiments = dailerData.experiments;
           });
           globals.message({
-            state: 'success', text: 'You probably need to reload app for all experiments will take effect'
+            state: 'success', text: 'You need to reload app so all experiments will take effect'
           });
           toggleExperiments();
         }

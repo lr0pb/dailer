@@ -5,7 +5,7 @@ import { isCustomPeriod } from '../highLevel/periods.js'
 const periodsCount = 5;
 
 export async function paintPeriods(globals) {
-  qs('#periodsText').innerHTML = `Select up to ${periodsCount} periods that will be shown in Period choise drop down list of task`;
+  qs('#periodsText').innerHTML = `Select up to <strong>${periodsCount}</strong> periods that will be shown in Periods drop down list of task creation`;
   const pc = qs('#periodsContainer');
   const periods = await globals.getPeriods();
   const periodData = await globals.db.getItem('settings', 'periods');

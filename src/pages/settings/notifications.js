@@ -50,7 +50,7 @@ export function toggleNotifReason(session, value, globals) {
   if (isBadValue(value)) {
     qs('#notifTopics').innerHTML = '';
     qs('#notifReason').innerHTML = value == 2
-    ? `${emjs.warning} You denied in notifications permission, so grant it via site settings in browser`
+    ? `${emjs.warning} You denied in permission for notifications, you can change it though site settings in browser`
     : `${emjs.warning} Notifications are available only as you install app on your home screen`;
     if (value == 3) {
       qs('#install').style.display = 'block';
@@ -149,6 +149,7 @@ export async function requestNotifications(globals) {
   const session = await globals.db.getItem('settings', 'session');
   const value = getNotifPerm(session, resp, data.enabled);
   const elem = qs('[data-id="notifications"]');
+  if (!elem) return value;
   elem.dataset.value = value;
   elem.querySelector('button').innerHTML = getEmoji(null, null, null, value);
   toggleNotifReason(session, value, globals);

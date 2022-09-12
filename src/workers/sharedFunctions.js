@@ -33,7 +33,7 @@ export async function createDay(today = getToday()) {
   if (!day || day.lastTasksChange !== env.session.lastTasksChange) {
     day = getRawDay(today, !day);
   } else return isEmpty(day) ? { day: 'error' } : { day };
-  if (cleared) day.cleared = cleared;
+  if (cleared !== null) day.cleared = cleared;
   if (!tasks) {
     tasks = [];
     await env.db.getAll('tasks', (task) => {

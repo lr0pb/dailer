@@ -15,30 +15,37 @@ export const taskCreator = {
   },
   get titleEnding() { return taskTitle ? 'line' : 'text'; },
   dynamicTitle: true,
+  styleClasses: 'doubleColumns',
   get header() { return `${emjs.paperWPen} <span id="taskAction">Add</span> task`},
   get page() { return `
-    <h3 id="nameTitle">Enter task you will control</h3>
-    <input type="text" id="name" placeHolder="Task name">
-    <h3>How important is this task?</h3>
-    <select id="priority" title="Select how important is this task"></select>
-    <h3>How often will you perform this task?</h3>
-    <select id="period" title="Select how often or when will you perform this task"></select>
-    <h3 id="description" class="hidedUI"></h3>
-    <h3 id="startDateTitle" class="hidedUI">When start to performing this task?</h3>
-    <select id="startDate" class="hidedUI" title="Select option when start to performing this task">
-    </select>
-    <h3 id="dateTitle" class="hidedUI"></h3>
-    <input type="date" id="date" class="hidedUI">
-    <div id="wishlistToggler" class="wishlist"></div>
-    <h3 class="wishlist hidedUI">Add more ambitious and long-term tasks to your wishlist</h3>
-    <div id="endDateToggler"></div>
-    <h3 id="endDateTitle" class="endDate hidedUI">Select day when stop to performing this task</h3>
-    <input type="date" id="endDate" class="endDate hidedUI">
-    <div id="editButtons">
-      <button id="disable" class="secondary noEmoji">Disable task</button>
-      <button id="delete" class="danger noEmoji">Delete task</button>
-      <h3>Make sure that you can't undo any of these actions</h3>
+    <div>
+      <h3 id="nameTitle">Enter task you will control</h3>
+      <input type="text" id="name" placeHolder="Task name">
+      <h3>How important is this task?</h3>
+      <select id="priority" title="Select how important is this task"></select>
+      <h3>How you want to perform this task?</h3>
+      <select id="period" title="Select how you want to perform this task"></select>
+      <h3 id="description" class="hidedUI"></h3>
+      <h3 id="startDateTitle" class="hidedUI">When start to perform the task?</h3>
+      <select id="startDate" class="hidedUI" title="Select option when start to perform the task">
+      </select>
+      <h3 id="dateTitle" class="hidedUI"></h3>
+      <input type="date" id="date" class="hidedUI">
+      <div id="wishlistToggler" class="wishlist"></div>
+      <h3 class="wishlist hidedUI">Add more ambitious and long-term tasks to your wishlist</h3>
+      <div id="endDateToggler"></div>
+      <h3 id="endDateTitle" class="endDate hidedUI">Select day when stop to perform the task</h3>
+      <input type="date" id="endDate" class="endDate hidedUI">
+      <div id="editButtons">
+        <h3>Any of actions below cannot be cancelled</h3>
+        <div class="content first stretch">
+          <button id="restart">${emjs.reload} Restart task</button>
+          <button id="disable" class="secondary">${emjs.disabled} Disable task</button>
+          <button id="delete" class="danger">${emjs.trashCan} Delete task</button>
+        </div>
+      </div>
     </div>
+    <div></div>
   `},
   get footer() { return `
     <button id="back" class="secondary">${emjs.back} Back</button>
@@ -113,6 +120,7 @@ async function onTaskCreator({globals, params}) {
     globals.pageInfo.lastPeriodValue = '09';
     period.setAttribute('disabled', '');
     qs('[data-id="wishlist"]').activate();
+    qs('[data-id="wishlist"] button').setAttribute('disabled', '');
   }
   safeDataInteractions(['name', 'priority', 'period', 'startDate', 'date', 'endDate']);
   await taskCreator.onSettingsUpdate({globals});
@@ -228,6 +236,13 @@ async function enterEditTaskMode(globals, td) {
 
 function enableEditButtons(globals, td) {
   show('#editButtons');
+  if (dailerData.experiments) {
+    qs('#restart').addEventListener('click', async () => {
+      globals.message({
+        state: 'success', text: `Restart is not available at the time`
+      });
+    });
+  } else qs('#restart').remove();
   const onConfirm = () => history.back();
   qs('#disable').addEventListener('click', async () => {
     await editTask({ globals, id: td.id, field: 'disabled', onConfirm });

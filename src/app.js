@@ -13,7 +13,6 @@ import {
   checkForFeatures, isDesktop, isWideInterface, isDoubleColumns,
   platform, isIOS, isMacOS, isSafari
 } from './logic/environment.js'
-import { getToday, oneDay } from './pages/highLevel/periods.js'
 import { processSettings, toggleExperiments } from './pages/highLevel/settingsBackend.js'
 import { checkInstall } from './pages/main.js'
 import { registerPeriodicSync, toggleNotifReason } from './pages/settings/notifications.js'
@@ -34,7 +33,7 @@ if (!window.dailerData) Object.defineProperty(window, 'dailerData', {
   value: {
     nav: 'navigation' in window ? true : false,
     forcePeriodPromo: false,
-    forceReminderPromo: false,
+    forceReminderPromo: true,
     platform, isIOS, isMacOS, isSafari,
     isDesktop: isDesktop(),
     isWideInterface: isWideInterface(),
@@ -243,6 +242,7 @@ if ('navigation' in window) {
 
 window.addEventListener('beforeinstallprompt', async (e) => {
   e.preventDefault();
+  if (dailerData.isDev) return;
   globals.installPrompt = e;
   const session = await globals.db.updateItem('settings', 'session', (session) => {
     session.installed = false;
