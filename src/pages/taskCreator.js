@@ -1,7 +1,7 @@
-import { getToday, convertDate, oneDay, getWeekStart, isCustomPeriod } from './highLevel/periods.js'
-import { editTask, setPeriodTitle, renderToggler, toggleFunc } from './highLevel/taskThings.js'
+import { getToday, convertDate, oneDay, getWeekStart } from './highLevel/periods.js'
+import { editTask, renderToggler, toggleFunc } from './highLevel/taskThings.js'
 import {
-  qs, qsa, copyObject, createOptionsList, show, showFlex, hide, getElements, getValue
+  qs, qsa, createOptionsList, show, showFlex, hide, getElements, getValue, getDate
 } from '../utils/dom.js'
 import { safeDataInteractions, syncGlobals, updateState } from '../utils/appState.js'
 
@@ -23,10 +23,10 @@ export const taskCreator = {
       <input type="text" id="name" placeHolder="Task name">
       <h3>How important is this task?</h3>
       <select id="priority" title="Select how important is this task"></select>
-      <h3>How you want to perform this task?</h3>
-      <select id="period" title="Select how you want to perform this task"></select>
+      <h3>When do you want to perform this task?</h3>
+      <select id="period" title="Select when do you want to perform this task"></select>
       <h3 id="description" class="hidedUI"></h3>
-      <h3 id="startDateTitle" class="hidedUI">When start to perform the task?</h3>
+      <h3 id="startDateTitle" class="hidedUI">When start to perform this task?</h3>
       <select id="startDate" class="hidedUI" title="Select option when start to perform the task">
       </select>
       <h3 id="dateTitle" class="hidedUI"></h3>
@@ -34,14 +34,14 @@ export const taskCreator = {
       <div id="wishlistToggler" class="wishlist"></div>
       <h3 class="wishlist hidedUI">Add more ambitious and long-term tasks to your wishlist</h3>
       <div id="endDateToggler"></div>
-      <h3 id="endDateTitle" class="endDate hidedUI">Select day when stop to perform the task</h3>
+      <h3 id="endDateTitle" class="endDate hidedUI">When stop to perform this task?</h3>
       <input type="date" id="endDate" class="endDate hidedUI">
       <div id="editButtons">
-        <h3>Any of actions below cannot be cancelled</h3>
+        <h3 class="first">Any of actions below cannot be cancelled</h3>
         <div class="content first stretch">
-          <button id="restart">${emjs.reload} Restart task</button>
-          <button id="disable" class="secondary">${emjs.disabled} Disable task</button>
-          <button id="delete" class="danger">${emjs.trashCan} Delete task</button>
+          <button id="restart" class="transparent">${emjs.reload} Restart task</button>
+          <button id="disable" class="transparent">${emjs.disabled} Disable task</button>
+          <button id="delete" class="transparent">${emjs.trashCan} Delete task</button>
         </div>
       </div>
     </div>
@@ -107,13 +107,13 @@ async function onTaskCreator({globals, params}) {
     page: qs('#wishlistToggler'), value: 0, toggler: emjs.blank, first: true
   });
   renderToggler({
-    name: `${emjs.alarmClock} No limit to end date`, id: 'noEndDate',
+    name: `${emjs.alarmClock} Set deadline`, id: 'enableEndDate',
     buttons: [{
-      emoji: emjs.sign, func: ({e, elem}) => {
+      emoji: emjs.blank, func: ({e, elem}) => {
         const value = toggleFunc({e, elem});
-        qsa('.endDate').forEach(value ? hide : show);
+        qsa('.endDate').forEach(value ? show : hide);
       }
-    }], page: qs('#endDateToggler'), value: 1, first: true
+    }], page: qs('#endDateToggler'), value: 0, first: true
   });
   if (params.wishlist == 'true') {
     if (!globals.pageInfo) globals.pageInfo = {};
@@ -219,10 +219,10 @@ async function enterEditTaskMode(globals, td) {
     show(date);
   }
   if (td.endDate) {
-    qs('[data-id="noEndDate"]').activate();
-    endDate.value = convertDate(td.endDate);
+    qs('[data-id="enableEndDate"]').activate();
+    endDate.value = convertDate(td.endDate - oneDay);
   } else if (td.special == 'oneTime') {
-    hide('[data-id="noEndDate"]');
+    hide('[data-id="enableEndDate"]');
   }
   if (td.special == 'untilComplete') {
     if (td.wishlist) qs('[data-id="wishlist"]').activate();
@@ -284,10 +284,10 @@ async function onPeriodChange(event, globals) {
     qsa('.wishlist').forEach(show);
   } else qsa('.wishlist').forEach(hide);
   if (per.special == 'oneTime') {
-    const toggler = qs('[data-id="noEndDate"]');
-    if (!Number(toggler.dataset.value)) toggler.activate();
+    const toggler = qs('[data-id="enableEndDate"]');
+    if (Number(toggler.dataset.value)) toggler.activate();
     hide(toggler);
-  } else showFlex('[data-id="noEndDate"]');
+  } else showFlex('[data-id="enableEndDate"]');
   onStartDateChange({ target: e.startDate });
   onDateChange({ target: e.date });
 }
@@ -320,12 +320,13 @@ export async function createTask(globals, td = {}) {
   const isPageExist = qs('#name') ? true : false;
   const e = isPageExist ? getElements('name', 'period', 'priority', 'date', 'endDate') : {};
   const task = await globals.worker.call({ process: 'createTask', args: [{
-    id: td.id, td, isPageExist, name: isPageExist ? e.name.value : td.name,
+    td,
+    name: isPageExist ? e.name.value : td.name,
     period: isPageExist ? e.period.value : td.periodId,
     priority: isPageExist ? Number(e.priority.value) : td.priority,
-    date: isPageExist ? new Date(e.date.value).getTime() : td.periodStart,
-    enableEndDate: isPageExist ? getValue('noEndDate') : td.endDate,
-    endDate: isPageExist ? new Date(e.endDate.value).getTime() : td.endDate,
+    date: isPageExist ? getDate(e.date) : td.periodStart,
+    enableEndDate: isPageExist ? getValue('enableEndDate') : td.endDate,
+    endDate: isPageExist ? getDate(e.endDate) + oneDay : td.endDate,
     wishlist: isPageExist ? getValue('wishlist') : td.wishlist,
   }] });
   console.log(task);

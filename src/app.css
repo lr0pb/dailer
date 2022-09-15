@@ -21,12 +21,15 @@
   --mainBg: hsl(var(--brand), 50%, 3%);
   --transparentBg: rgba(0, 0, 0, 0.1);
   --mainText: white;
+  --textRGB: 255, 255, 255;
   --darkBorder: hsla(var(--brand), 12%, 16%, 0.5);
   --darkShadow: hsl(var(--brand), 10%, 35%);
   --accent: hsl(var(--brand), 60%, 51%);
   --secondary: hsl(var(--brand), 15%, 35%);
   --accentGreen: #379b00;
   --accentRed: #cb3a3a;
+  --accentGreenRGB: 55, 155, 0;
+  --accentRedRGB: 203, 58, 58;
   --lightBlueBg: hsl(var(--brand), 19%, 48%);
   --taskBg: hsla(var(--brand), 10%, 17%, 0.5);
   --gradientLight: #5a73f2;
@@ -34,7 +37,7 @@
   --infoRectBg: hsla(var(--brand), 40%, 13%, 0.5);
   --lightBorder: rgba(227, 227, 227, 0.35);
   --popupBg: #343434;
-  --marker: hsl(var(--brand), 100%, 90%);
+  --marker: hsl(var(--brand), 100%, 75%);
   --msgBg: var(--mainBg);
   --focusBorder: #d1d1d1;
   --focusBg: hsl(var(--brand), 10%, 18%);
@@ -51,6 +54,7 @@ html { font-size: 1.25vmin; }
     --mainBg: hsl(var(--brand), 30%, 98%);
     --transparentBg: rgba(255, 255, 255, 0.2);
     --mainText: black;
+    --textRGB: 0, 0, 0;
     --darkBorder: hsla(var(--brand), 60%, 90%, 0.5);
     --darkShadow: hsl(var(--brand), 35%, 85%);
     /*--accent: #699ade;*/
@@ -64,7 +68,7 @@ html { font-size: 1.25vmin; }
     --infoRectBg: hsla(var(--brand), 20%, 96%, 0.5);
     --lightBorder: rgb(174, 174, 174, 0.35);
     --popupBg: var(--mainBg);
-    --marker: hsl(var(--brand), 100%, 75%);
+    /*--marker: hsl(var(--brand), 100%, 90%); this got switched between day & night*/
     --msgBg: #232323;
     --focusBorder: #626262;
     --focusBg: hsl(var(--brand), 59%, 92%);
@@ -154,8 +158,6 @@ html { font-size: 1.25vmin; }
   :root { --fullWidth: 75vw; }
 }
 
-.historyMonth > h4 { height: 1.87em; }
-
 @media (min-width: 935px) and (orientation: landscape) {
   :root { --gridContent: calc(var(--fullWidth) * 2 + 3rem); }
   .doubleColumns:not(.center) {
@@ -167,8 +169,6 @@ html { font-size: 1.25vmin; }
   }
   .doubleColumns { width: var(--gridContent); }
   .floatingMsg.notFixed { min-height: 13rem; }
-  .historyMonth > h4 { height: 1.7em; }
-  .historyMonth > h4 > .emojiSymbol { margin-top: 0.5rem; }
 }
 
 .doubleColumns > *, .stretch > * {
@@ -195,6 +195,7 @@ noscript {
 .page, #settings {
   position: fixed;
   display: grid;
+  contain: content;
   top: 0; left: 0;
   grid-template-areas:
     "... header ..."
@@ -402,6 +403,7 @@ strong {
   border-radius: 1.5rem;
   font-weight: bold;
 }
+.darkText { color: rgba(var(--textRGB), 0.25);}
 
 button, .task, #message, input, select, #infoBackground,
 .infoRect, #popup > div, .floatingMsg, .historyMonth > * {
@@ -638,7 +640,15 @@ a:visited { color: var(--secondary); }
   width: calc(var(--fullWidth) - 7rem);
   background-color: var(--popupBg);
   margin: 0;
+  opacity: 0.7;
+  transform: scale(0.85);
+  transition: var(--normalAnim) cubic-bezier(0.41, 0.19, 0.46, 1.34);
 }
+#popup.showPopup > div {
+  opacity: 1;
+  transform: none;
+}
+
 #popup h2:not(.emoji) {
   margin-top: 0;
   margin-bottom: 1rem;
@@ -653,6 +663,15 @@ a:visited { color: var(--secondary); }
 }
 #history > * { scroll-snap-stop: always; }
 #history > * > h3 { text-align: center; }
+.historyMonth > h4, .historyDay, .monthContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.historyMonth > h4 {
+  height: 1.87em;
+  font-weight: 400;
+}
 .historyMonth > * {
   width: calc(var(--fullWidth) / 7);
   text-align: center;
@@ -663,8 +682,27 @@ a:visited { color: var(--secondary); }
   border-left-width: 0;
   border-right-width: 0;
 }
-#history div:last-child .historyMonth > *:last-child {
+.today {
   background-color: var(--marker);
+  color: var(--mainText);
+}
+[data-day] {
+  border: 0.7rem transparent solid;
+}
+.selectedDay {
+  border-color: var(--accent);
+}
+.selectedDay > .historyDay {
+  --color: transparent !important;
+}
+.monthContainer { height: calc(100% - 7rem); }
+.historyDay {
+  background-color: rgba(var(--color), 0.25);
+  width: 80%; height: 100%;
+  border-radius: 1.5rem;
+}
+#dayNotice .floatingMsg {
+  width: var(--fullWidth);
 }
 
 .togglableElement > *:first-child {

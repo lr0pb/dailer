@@ -157,7 +157,7 @@ export function getTextDate(date) {
 export function setPeriodTitle(task) {
   task.periodStart = normalizeDate(task.periodStart);
   const startTitle = getTextDate(task.periodStart);
-  const endTitle = task.endDate ? getTextDate(task.endDate) : null;
+  const endTitle = task.endDate ? getTextDate(task.endDate - oneDay) : null;
 
   if (task.special == 'oneTime' && task.period.length == 1) {
     task.periodTitle = `Only ${startTitle}`;

@@ -67,12 +67,5 @@ export const recap = {
         }, page: container, forcedDay: date
       });
     }
-    if (dailerData.experiments) {
-      const info = document.createElement('h3');
-      info.innerHTML = `
-        cleared: ${day.cleared}, afterDayEndedProccessed: ${day.afterDayEndedProccessed}
-      `;
-      container.append(info);
-    }
   }
 };

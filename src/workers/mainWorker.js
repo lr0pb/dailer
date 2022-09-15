@@ -75,7 +75,7 @@ async function checkReminderPromo() {
 }
 
 async function createTask({
-  id, td, isPageExist, name, period, priority, date, enableEndDate, endDate, wishlist
+  td, name, period, priority, date, enableEndDate, endDate, wishlist
 }) {
   if (!env.periods) await updatePeriods();
   const per = env.periods[period];
@@ -106,8 +106,8 @@ async function createTask({
   if (td.name && task.name != td.name) task.nameEdited = true;
   if (td.nameEdited) task.name = td.name;
   if (td.created) task.created = td.created;
-  if (enableEndDate == 0 && endDate) task.endDate = endDate;
-  if (task.special == 'untilComplete' && wishlist) task.wishlist = wishlist;
+  if (enableEndDate && endDate) task.endDate = endDate;
+  if (task.special == 'untilComplete' && wishlist) task.wishlist = true;
   setPeriodTitle(task);
   return task;
 }

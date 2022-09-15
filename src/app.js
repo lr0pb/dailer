@@ -33,7 +33,7 @@ if (!window.dailerData) Object.defineProperty(window, 'dailerData', {
   value: {
     nav: 'navigation' in window ? true : false,
     forcePeriodPromo: false,
-    forceReminderPromo: true,
+    forceReminderPromo: false,
     platform, isIOS, isMacOS, isSafari,
     isDesktop: isDesktop(),
     isWideInterface: isWideInterface(),
@@ -41,6 +41,7 @@ if (!window.dailerData) Object.defineProperty(window, 'dailerData', {
     experiments: 0,
   },
   writable: false,
+  configurable: false
 });
 checkForFeatures(['inert', 'focusgroup']);
 

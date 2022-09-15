@@ -1,6 +1,6 @@
 import { pages } from './pages.js'
 import {
-  qs as localQs, globQs as qs, globQsa as qsa, copyArray, copyObject, inert
+  qs as localQs, globQs as qs, globQsa as qsa, copyArray, copyObject, inert, showFlex, hide
 } from '../utils/dom.js'
 import { getParams } from '../utils/appState.js'
 
@@ -143,7 +143,7 @@ function message({state, text}) {
 function openPopup({text, action, emoji, strictClosing}) {
   const popup = qs('#popup');
   if (strictClosing) popup.classList.add('strictClosing');
-  popup.style.display = 'flex';
+  showFlex(popup);
   inert.set(qs(globals.settings ? '#settings' : '.current'));
   inert.remove(popup, popup.querySelector('[data-action="cancel"]'));
   qs('#popup h2.emoji').innerHTML = emoji;
@@ -151,15 +151,23 @@ function openPopup({text, action, emoji, strictClosing}) {
   popup.querySelector('[data-action="confirm"]').onclick = async () => {
     await action();
     globals.closePopup();
-  }
+  };
+  requestAnimationFrame(() => {
+    popup.classList.add('showPopup');
+    popup.querySelector('div').style.transitionTimingFunction = 'ease';
+  });
 }
 
 function closePopup(dontImpactToNavigation) {
   const popup = qs('#popup');
   inert.remove(qs(globals.settings ? '#settings' : '.current'));
   inert.set(popup);
-  popup.classList.remove('strictClosing');
-  popup.style.display = 'none';
+  popup.classList.remove('showPopup', 'strictClosing');
+  if (popup.hasAttribute('style')) popup.ontransitionend = () => {
+    popup.ontransitionend = null;
+    hide(popup);
+    popup.querySelector('div').removeAttribute('style');
+  };
   qs('[data-action="confirm"]').onclick = null;
   if (dontImpactToNavigation) return;
   const link = location.href.replace(/&popup=\w+/, '');

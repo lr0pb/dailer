@@ -29,8 +29,12 @@ export function getElements(...elems) {
   return resp;
 }
 
-export function getValue(elem) {
-  return Number(qs(`[data-id="${elem}"]`).dataset.value);
+export function getValue(elemId) {
+  return Number(qs(`[data-id="${elemId}"]`).dataset.value);
+}
+
+export function getDate(elem) {
+  return new Date(elem.value).getTime();
 }
 
 export const copyObject = (obj) => {

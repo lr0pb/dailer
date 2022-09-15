@@ -1,6 +1,6 @@
 import { getToday, normalizeDate, oneDay, isCustomPeriod } from './highLevel/periods.js'
 import { getTextDate } from './highLevel/taskThings.js'
-import { qs, hide, getElements } from '../utils/dom.js'
+import { qs, getElements, handleKeyboard } from '../utils/dom.js'
 import { syncGlobals } from '../utils/appState.js'
 
 let taskTitle = null;
@@ -79,7 +79,7 @@ async function renderTaskInfo({globals, page, params}) {
       <h2>Stats</h2>
       <div id="stats" class="content center">
         <h2 class="emoji">${emjs.sparkles}</h2>
-        <h3>Stats for this tasks is available and will be rendering with coming updates to app</h3>
+        <h3>Stats for this tasks are available and will appear in future updates</h3>
       </div>
       ` : isa === false && !task.disabled ? `
       <h2>Stats</h2>
@@ -90,6 +90,8 @@ async function renderTaskInfo({globals, page, params}) {
     }${!iha ? '' : `
       <h2>History</h2>
       <div id="history" class="hiddenScroll"></div>
+      <h3>${emjs.light} Click on the point in the history to see more about this day</h3>
+      <div id="dayNotice" class="first"></div>
     `}</div>
   `;
   renderItemsHolder({task, periods, priorities, iha});
@@ -104,7 +106,7 @@ function renderItemsHolder({task, periods, priorities, iha}) {
   const perTitle = isCustomPeriod(task.periodId)
   ? `<span class="customTitle" data-period="${task.periodId}">${rawTitle}</span>` : rawTitle;
   const startTitle = getTextDate(task.periodStart);
-  const endTitle = task.endDate ? getTextDate(task.endDate) : null;
+  const endTitle = task.endDate ? getTextDate(task.endDate - oneDay) : null;
   const periodText = !task.special
     ? `${perTitle} from ${startTitle}${task.endDate ? ` to ${endTitle}` : ''}`
     : (task.endDate
@@ -173,7 +175,7 @@ function getPeriodsData(task) {
 }
 
 function isStatsAvailable(task) {
-  if (!dailerData.experiments) return undefined;
+  /*if (!dailerData.experiments)*/ return undefined;
   if (task.special && task.period.length == 1) return undefined;
   const { periodsInWeek, runnedPeriods } = getPeriodsData(task);
   if (runnedPeriods >= periodsInWeek * 2) return true;
@@ -181,17 +183,51 @@ function isStatsAvailable(task) {
   return false;
 }
 
-function createMonth(name, month, history) {
+const formatter = {
+  day: new Intl.DateTimeFormat('en', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  }),
+  month: new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' })
+}
+
+function createMonth(date, month, history) {
   const elem = document.createElement('div');
   elem.dataset.month = month;
   elem.innerHTML = `
-    <h3>${name}</h3><div class="historyMonth"></div>
+    <h3>${formatter.month.format(date)}</h3>
+    <div class="monthContainer">
+      <div class="historyMonth" ${
+        dailerData.focusgroup ? `focusgroup="horizontal"` : ''
+      }></div>
+    </div>
   `;
   history.append(elem);
-  return elem.querySelector('.historyMonth');
+  const hm = elem.querySelector('.historyMonth');
+  hm.addEventListener('click', onHistoryDayClick);
+  handleKeyboard(hm);
+  return hm;
 }
 
-const formatter = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' });
+function onHistoryDayClick(e) {
+  const target = e.target.dataset.day
+  ? e.target : e.target.parentElement.dataset.day
+  ? e.target.parentElement : e.target.parentElement.parentElement;
+  if (!target.role) return;
+  const date = new Date(Number(target.dataset.day));
+  if (target.classList.contains('selectedDay')) {
+    target.classList.remove('selectedDay');
+    qs('#dayNotice').innerHTML = ``;
+  } else {
+    qs('.selectedDay')?.classList.remove('selectedDay');
+    target.classList.add('selectedDay');
+    qs('#dayNotice').innerHTML = `
+      <div class="floatingMsg notFixed">
+        <h3>${emjs.calendar} ${formatter.day.format(date)}</h3>
+        <!--<button class="noEmoji">View&nbsp;day</button>-->
+      </div>
+    `;
+  }
+}
 
 function borderValues(value) {
   value--;
@@ -215,32 +251,52 @@ function getWeekendDays(date, month) {
   return days;
 }
 
-function renderEmptyDays(hm, count) {
-  for (let i = 0; i < count; i++) { hm.innerHTML += `<h4> </h4>`; }
+function renderEmptyDays(hm, count, firstDay) {
+  for (let i = 0; i < count; i++) {
+    const date = firstDay ? firstDay + oneDay * i : null;
+    hm.innerHTML += `
+      <h4 ${firstDay ? `data-day="${date}"` : ''} class="darkText">${
+        firstDay ? new Date(date).getDate() : ' '
+      }</h4>
+    `;
+  }
 }
 
 function init(date, h, hm) {
   const month = date.getMonth();
-  if (!hm || hm.parentElement.dataset.month !== String(month)) {
-    hm = createMonth(formatter.format(date), month, h);
+  const year = date.getFullYear();
+  if (
+    !hm || hm.parentElement.parentElement.dataset.month !== `${month}-${year}`
+  ) {
+    hm = createMonth(date, `${month}-${year}`, h);
+    const firstMonthDay = new Date(year, month, 1);
+    if (firstMonthDay.getTime() !== date.getTime()) {
+      const beforeMonthDays = borderValues(firstMonthDay.getDay());
+      renderEmptyDays(hm, beforeMonthDays);
+    }
+    renderEmptyDays(hm, date.getDate() - 1, 1);
     const emptyDays = borderValues(date.getDay());
     let rwd = null; // remainingWeekendDays
     if (date.getDate() !== 1) {
       rwd = getWeekendDays(date, month);
-      const firstWeekendDay = new Date(rwd.at(-1)).getDay();
+      /*const firstWeekendDay = new Date(rwd.at(-1)).getDay();
       renderEmptyDays(hm, borderValues(firstWeekendDay));
       for (let i = 1; i < rwd.length + 1; i++) {
         const weekendDay = new Date(rwd.at(-1 * i));
-        hm.innerHTML += `<h4>${weekendDay.getDate()}</h4>`
-        if (weekendDay.getDay() == 0 && i !== rwd.length) renderEmptyDays(hm, 5);
-      }
+        hm.innerHTML += `<h4 style="opacity: 0.25;">${weekendDay.getDate()}</h4>`
+        if (weekendDay.getDay() == 0 && i !== rwd.length) {
+          renderEmptyDays(hm, 5);
+        }
+      }*/
     }
     if (
-      (rwd && rwd[0] + oneDay !== date.getTime()) || !rwd
+      /*(rwd && rwd[0] + oneDay !== date.getTime()) ||*/ !rwd
     ) renderEmptyDays(hm, emptyDays);
   }
   return hm;
 }
+
+const buttonable = `role="button" tabindex="0"`;
 
 async function renderHistory(task, isa) {
   const h = qs('#history');
@@ -249,16 +305,36 @@ async function renderHistory(task, isa) {
     date = new Date(date);
     hm = init(date, h, hm);
     if (item && isa) addToStats(date, item);
-  }
+  };
+  const after = (date) => {
+    if (date != getToday()) return;
+    hm.querySelector('* > h4:last-child').classList.add('today');
+    const today = new Date(date);
+    const lastMonthDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const daysToEnd = (lastMonthDay.getTime() - today.getTime()) / oneDay;
+    renderEmptyDays(hm, daysToEnd, today.getTime() + oneDay);
+  };
   await getHistory({
     task,
     onBlankDay: (date) => {
       initial(date);
-      hm.innerHTML += `<h4>${emjs.blank}</h4>`;
+      hm.innerHTML += `
+        <h4 data-day="${date}" class="darkText" ${buttonable}>${
+          new Date(date).getDate()
+        }</h4>
+      `;
+      after(date);
     },
     onActiveDay: (date, item) => {
       initial(date, item);
-      hm.innerHTML += `<h4>${item ? emjs.sign : emjs.cross}</h4>`;
+      hm.innerHTML += `
+        <h4 data-day="${date}" ${buttonable}>
+          <div class="historyDay"style="--color: var(--accent${
+            item ? 'Green' : 'Red'
+          }RGB);">${emjs[item ? 'sign' : 'cross']}</div>
+        </h4>
+      `;
+      after(date);
     }
   });
   qs('#history > div:last-child').scrollIntoView();

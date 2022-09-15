@@ -32,7 +32,7 @@ export const periodCreator = {
     <div class="togglerContainer first"></div>
     <h3 class="excludeInEdit">When period is over, it will repeat again</h3>
     <div class="togglerContainer first"></div>
-    <h3 class="excludeInEdit">Period days will be linked to week days<!--, no matter when you start task with this period--></h3>
+    <h3 class="excludeInEdit">Period days will be linked to the week days<!--, no matter when you start task with this period--></h3>
     <div class="togglerContainer first"></div>
     <h3>This period will be selected by default when you creating new tasks</h3>
   `},
