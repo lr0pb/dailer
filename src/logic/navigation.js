@@ -21,7 +21,9 @@ export async function renderFirstPage(globals) {
   const params = getParams();
   const { rndr, firstPage } = await verifyRenderPage(globals, params);
   if (['main', 'recap', 'onboarding'].includes(rndr)) {
-    await globals.paintPage(rndr, { replaceState: true });
+    await globals.paintPage(rndr, {
+      replaceState: true, params, dontClearParams: true
+    });
   } else {
     await globals.paintPage(firstPage, { replaceState: true, noAnim: true });
     await globals.paintPage(rndr, { params });

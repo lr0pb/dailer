@@ -1,6 +1,6 @@
 {
   "name": "dailer",
-  "version": "1.5.7",
+  "version": "1.6.0",
   "description": "Plan tasks for the day and analyze how you grow yourself over time. Create wishlist to manage more ambitious tasks",
   "author": "lr0pb",
   "repository": {
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "rollup -c",
-    "dev": "set DEV=1 && set SERVE=1 && rollup -c -w",
+    "dev": "set DEV=1 && set SERVE=1 && rollup -c -w -m",
     "serve": "set SERVE=1 && npm run build"
   },
   "devDependencies": {

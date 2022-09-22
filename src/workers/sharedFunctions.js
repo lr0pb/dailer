@@ -46,18 +46,17 @@ export async function createDay(today = getToday()) {
   };
   for (let task of tasks) {
     if (task.wishlist) continue;
-    if (task.periodStart <= today) {
-      if (day.firstCreation || !task.history.length) {
-        updateTask(task);
-        if (task.period[task.periodDay]) {
-          task.history.push(0);
-          addTask(task, 0);
-          if (task.special && task.special == 'untilComplete') day.cleared = false;
-        }
-        await env.db.setItem('tasks', task);
-      } else if (task.period[task.periodDay]) {
-        addTask(task, task.history.at(-1));
+    if (task.periodStart > today) continue;
+    if (day.firstCreation || !task.history.length) {
+      updateTask(task);
+      if (task.period[task.periodDay]) {
+        task.history.push(0);
+        addTask(task, 0);
+        if (task.special && task.special == 'untilComplete') day.cleared = false;
       }
+      await env.db.setItem('tasks', task);
+    } else if (task.period[task.periodDay]) {
+      addTask(task, task.history.at(-1));
     }
   }
   await env.db.setItem('days', day);
@@ -221,5 +220,8 @@ export async function checkBackupReminder() {
   remind.isDownloaded = false;
   if (remind.nextRemind === getToday()) resp.show = true;
   await env.db.setItem('settings', remind);
+  if (remind.lastTimeDownloaded + oneDay * remind.daysToShowPopup <= getToday()) {
+    resp.popup = true;
+  }
   return resp;
 };

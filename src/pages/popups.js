@@ -15,7 +15,8 @@ export const popups = {
   uploadBackup: (globals) => {
     return {
       emoji: emjs.box,
-      text: 'Uploading backups in this way will be supported later',
+      text: 'Upload your backup',
+      description: 'Uploading backups through opening file will be available later',
       action: globals.closePopup
     };
   }

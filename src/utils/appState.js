@@ -7,6 +7,7 @@ export function getParams(url) {
     .replace('?', '')
     .split('&')
     .forEach((elem) => {
+      if (!elem) return;
       const splitted = elem.split('=');
       params[splitted[0]] = splitted[1];
     });

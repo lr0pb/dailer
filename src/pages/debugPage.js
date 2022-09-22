@@ -38,7 +38,8 @@ async function renderPage({globals, page}) {
   const periods = await globals.db.hasItem('periods');
   const data = {
     'Is storage persisted': isPersisted.toString(),
-    'Notification permission': Notification.permission,
+    'Notification permission': 'Notification' in window
+    ? Notification.permission : 'no data',
     'Theoretical available memory': convertBytes(memory.quota, 'Mb'),
     'Used memory': convertBytes(memory.usage, 'kb'),
     'Used by Cache storage': convertBytes(memory.usageDetails.caches, 'kb'),

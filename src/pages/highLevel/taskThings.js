@@ -1,94 +1,53 @@
-import { qs, handleKeyboard, convertEmoji } from '../../utils/dom.js'
-import { getToday, oneDay, normalizeDate, isCustomPeriod, intlDate } from './periods.js'
+import {
+  getToday, oneDay, normalizeDate, getTextDate, isCustomPeriod
+} from './periods.js'
 import { reloadApp } from '../../utils/appState.js'
+import { renderToggler, toggleFunc } from '../../ui/toggler.js';
 
-// req - required
-
-export function renderToggler({
-  name/*if body present - not req*/, body/*not req, html string*/, id/*req, string*/, buttons = []/*not req*/,
-  toggler/*not req*/, value/*if toggler present - req, number 1 | 0*/,
-  onBodyClick/*not req, func*/, args = {}/*not req, object*/,
-  page/*not req, html elem*/, first/*not req, boolean*/, disabled/*not req, boolean*/
+/**
+ * @callback completeCallback Calls after task complete button clicked
+ * @param {Day} day Day object
+ * @param {1 | 0} value Task complete state
+ */
+export function renderTask(globals, task, page, {
+  completeTask, editTask: edit, deleteTask, openTask, extendedInfo: ei,
+  customDay, completeCallback, customButtons
 }) {
-  // toggler property represents emoji, that will arrive as first toggle value
-  // but either this prop gives understand to enable default toggle function
-  const elem = document.createElement('div');
-  elem.className = `task ${first ? 'first' : ''}`;
-  elem.dataset.id = id;
-  const noChilds = !page ? true : page.children.length == 0;
-  if (onBodyClick) {
-    elem.setAttribute('role', 'button');
-    elem.tabIndex = dailerData.focusgroup ? (noChilds ? 0 : -1) : 0;
-    handleKeyboard(elem, true);
-  }
-  elem.setAttribute('focusgroup', 'extend horizontal');
-  let buttonsString = ``;
-  if (toggler) buttons.push({ emoji: toggler, func: toggleFunc });
-  buttons.forEach((btn, i) => {
-    buttonsString += `
-      <button data-action="${i}" class="emojiBtn" ${disabled ? 'disabled' : ''}
-        title="${btn.title || 'Toggle value'}" aria-label="${btn.aria || `Toggle ${convertEmoji(name)} value`}"
-        tabIndex="${dailerData.focusgroup ? (noChilds && !onBodyClick && i == 0 ? 0 : -1) : 0}"
-      >${btn.emoji}</button>
+  let body = null;
+  if (ei && typeof ei == 'object' && ei.periods && ei.priorities) {
+    const priority = ei.priorities[task.priority];
+    const emoji = emjs[`${priority.emoji} ` || ''];
+    body = `
+      <h3>${task.name}</h3>
+      <p>${isCustomPeriod(task.periodId)
+        ? `<span class="customTitle" data-period="${task.periodId}">${
+          ei.periods[task.periodId].title
+        }</span>${task.periodTitle}` : task.periodTitle
+      } | ${emoji}${priority.title}</p>
     `;
-  });
-  elem.innerHTML = `<div>${body || `<h2>${name}</h2>`}</div>${buttonsString}`;
-  elem.addEventListener('click', async (e) => {
-    const target = e.target.dataset.action
-    ? e.target : e.target.parentElement;
-    if (target.hasAttribute('disabled')) return;
-    if (target.dataset.action) {
-      const btn = buttons[target.dataset.action];
-      if (!btn.args) btn.args = {};
-      await btn.func({...btn.args, e, elem});
-    } else if (onBodyClick) {
-      await onBodyClick({...args, e, elem});
-    }
-  });
-  if (value !== undefined) elem.dataset.value = value;
-  elem.activate = () => elem.querySelector('button').click();
-  if (page) page.append(elem);
-  return elem;
-}
-
-export function toggleFunc({e, elem}) {
-  const value = Number(elem.dataset.value) ? 0 : 1;
-  elem.dataset.value = value;
-  const target = e.target.dataset.action ? e.target : e.target.parentElement;
-  target.innerHTML = emjs[value ? 'sign' : 'blank'];
-  return value;
-}
-
-export function renderTask({
-  type, globals, td, page, periods, priorities, forcedDay, extraFunc, openTask
-}) {
-  const markTitle = (task) => `Mark task${task ? ` "${task}"` : ''} as completed`;
-  if (type == 'day') return renderToggler({
-    name: td.name, id: td.id, buttons: [{
-      emoji: getTaskComplete(td), title: markTitle(), aria: markTitle(td.name),
-      func: onTaskCompleteClick, args: { globals, forcedDay, extraFunc }
-    }], page, onBodyClick: openTask ? openTaskInfo : null,
-    args: { globals }, value: td.history.at(-1)
-  });
-  const buttons = [{
-    emoji: emjs.pen, title: 'Edit task', aria: `Edit task: ${td.name}`,
+  }
+  const markTitle = (taskName) => `Mark task${taskName ? ` '${taskName}'` : ''} as completed`;
+  const buttons = [];
+  if (edit) buttons.push({
+    emoji: emjs.pen, title: 'Edit task', aria: `Edit task: ${task.name}`,
     func: onTaskEditClick, args: { globals }
-  }, {
-    emoji: emjs.trashCan, title: 'Delete task', aria: `Delete task: ${td.name}`,
+  });
+  if (deleteTask) buttons.push({
+    emoji: emjs.trashCan, title: 'Delete task', aria: `Delete task: ${task.name}`,
     func: onTaskDeleteClick, args: { globals, page }
-  }];
-  const priority = priorities[td.priority];
-  const emoji = emjs[priority.emoji || ''];
+  });
+  if (completeTask) buttons.push({
+    emoji: emjs[task.history.at(-1) ? 'sign' : 'blank'],
+    title: markTitle(), aria: markTitle(task.name),
+    func: onTaskCompleteClick, args: { globals, customDay, completeCallback }
+  });
+  if (customButtons && Array.isArray(customButtons)) buttons.push(
+    ...customButtons
+  );
   return renderToggler({
-    body: `
-      <h3>${td.name}</h3>
-      <p>${isCustomPeriod(td.periodId)
-        ? `<span class="customTitle" data-period="${td.periodId}">${
-          periods[td.periodId].title
-        }</span>${td.periodTitle}` : td.periodTitle
-      } | ${emoji}${emoji === '' ? '' : ' '}${priority.title}</p>
-    `, id: td.id, buttons: td.disabled ? undefined : buttons,
-    page, onBodyClick: openTaskInfo, args: { globals }
+    name: task.name, id: task.id, body, buttons, page,
+    value: completeTask ? task.history.at(-1) : null,
+    onBodyClick: openTask ? openTaskInfo : null, args: { globals }
   });
 }
 
@@ -107,72 +66,18 @@ async function onTaskDeleteClick({elem, globals, page}) {
   });
 }
 
-function openTaskInfo({elem, globals}) {
+async function openTaskInfo({elem, globals}) {
   const id = elem.dataset.id;
   if (!globals.pageInfo) globals.pageInfo = {};
   globals.pageInfo = { taskId: id };
-  globals.paintPage('taskInfo', { params: { id } });
+  await globals.paintPage('taskInfo', { params: { id } });
 }
 
-export function showNoTasks(page) {
-  page.classList.add('center');
-  const isArchive = page.parentElement.id == 'tasksArchive';
-  page.innerHTML = `
-    <h2 class="emoji">${isArchive ? emjs.book : emjs.empty}</h2>
-    <h2>${isArchive
-    ? 'When tasks become expired or disabled, they will be shown here'
-    : 'There are no active tasks right now!'}</h2>
-  `;
-}
-
-export async function editTask({globals, id, field, onConfirm}) {
-  const td = await globals.db.getItem('tasks', id);
-  globals.openPopup({
-    text: `Do you really want to ${field.replace(/\w$/, '')} this task?`,
-    emoji: emjs[field == 'deleted' ? 'trashCan' : 'disabled'],
-    action: async () => {
-      td[field] = true;
-      td.endDate = getToday();
-      await globals.db.setItem('tasks', td);
-      await globals.worker.call({ process: 'disable', args: td.id });
-      await globals.db.updateItem('settings', 'session', (session) => {
-        session.lastTasksChange = Date.now();
-      });
-      globals.message({ state: 'success', text: `Task ${field}` });
-      if (!globals.pageInfo) globals.pageInfo = {};
-      globals.pageInfo.stateChangedTaskId = id;
-      onConfirm();
-    }
-  });
-}
-
-export function getTextDate(date) {
-  let resp = intlDate(date);
-  if (date == getToday()) resp = 'today';
-  else if (date - oneDay == getToday()) resp = 'tomorrow';
-  else if (date + oneDay == getToday()) resp = 'yesterday';
-  return resp;
-}
-
-export function setPeriodTitle(task) {
-  task.periodStart = normalizeDate(task.periodStart);
-  const startTitle = getTextDate(task.periodStart);
-  const endTitle = task.endDate ? getTextDate(task.endDate - oneDay) : null;
-
-  if (task.special == 'oneTime' && task.period.length == 1) {
-    task.periodTitle = `Only ${startTitle}`;
-  } else if (task.special == 'untilComplete' && task.endDate) {
-    task.periodTitle = `${task.disabled ? 'Ended' : 'Complete until'} ${endTitle}`;
-  } else if (task.periodStart > getToday()) {
-    task.periodTitle += ` from ${startTitle}`;
-  } else if (task.endDate && !task.disabled) {
-    task.periodTitle += ` to ${endTitle}`;
-  }
-}
-
-export async function onTaskCompleteClick({ e, globals, elem, forcedDay, extraFunc }) {
+async function onTaskCompleteClick({
+  e, elem, globals, customDay, completeCallback
+}) {
   const td = await globals.db.getItem('tasks', elem.dataset.id);
-  const date = forcedDay ? forcedDay : getToday().toString();
+  const date = customDay ? customDay : getToday().toString();
   const day = await globals.db.getItem('days', date);
   if (!day) return globals.floatingMsg({
     text: `${emjs.alarmClock} Day is expired! So you need to reload tasks for today`,
@@ -187,9 +92,114 @@ export async function onTaskCompleteClick({ e, globals, elem, forcedDay, extraFu
   day.afterDayEndedProccessed = false;
   await globals.db.setItem('tasks', td);
   await globals.db.setItem('days', day);
-  if (extraFunc) await extraFunc(day, value);
+  if (completeCallback) await completeCallback(day, value);
 }
 
-export function getTaskComplete(td) {
-  return td.history.at(-1) ? emjs.sign : emjs.blank;
+export function showNoTasks(page) {
+  page.classList.add('center');
+  const isArchive = page.parentElement.id == 'tasksArchive';
+  page.innerHTML = `
+    <h2 class="emoji">${isArchive ? emjs.book : emjs.empty}</h2>
+    <h2>${isArchive
+    ? 'When tasks become expired or disabled, they will be shown here'
+    : 'There are no active tasks in the moment!'}</h2>
+  `;
+}
+
+export async function editTask({globals, id, field, onConfirm}) {
+  const td = await globals.db.getItem('tasks', id);
+  globals.openPopup({
+    text: `Do you really want to ${field.replace(/\w$/, '')} this task?`,
+    emoji: emjs[field == 'deleted' ? 'trashCan' : 'disabled'],
+    action: async () => {
+      td[field] = true;
+      if (!td.endDate || !td.special) td.endDate = getToday() + oneDay;
+      await globals.db.setItem('tasks', td);
+      await globals.worker.call({ process: 'disable', args: td.id });
+      await globals.db.updateItem('settings', 'session', (session) => {
+        session.lastTasksChange = Date.now();
+      });
+      globals.message({ state: 'success', text: `Task ${field}` });
+      if (!globals.pageInfo) globals.pageInfo = {};
+      globals.pageInfo.stateChangedTaskId = id;
+      onConfirm();
+    }
+  });
+}
+
+export function setPeriodTitle(task) {
+  task.periodStart = normalizeDate(task.periodStart);
+  const startTitle = getTextDate(task.periodStart);
+  const endTitle = task.endDate ? getTextDate(task.endDate - oneDay) : null;
+
+  if (task.special == 'oneTime' && task.period.length == 1) {
+    task.periodTitle = `Only ${startTitle}`;
+  } else if (task.special == 'untilComplete' && task.endDate) {
+    task.periodTitle = `${
+      task.disabled && task.endDate < getToday() ? 'Ended' : 'Complete until'
+    } ${endTitle}`;
+  } else if (task.periodStart > getToday()) {
+    task.periodTitle += ` from ${startTitle}`;
+  } else if (task.endDate && !task.disabled) {
+    task.periodTitle += ` to ${endTitle}`;
+  }
+}
+
+export function getTaskRestoreInfo(task, isShort) {
+  const borderDate = task.special == 'oneTime'
+  ? task.periodStart : task.special == 'untilComplete' ? task.endDate - oneDay : null
+  const canRestore = !task.special || (borderDate && borderDate >= getToday());
+  const restoreNow = !task.special || (task.special && task.disabled);
+  const restoreText = `${
+    canRestore || isShort ? '' : `${emjs.warning} `
+  }${isShort ? '' : `You can`}${canRestore ? '' : 'not'}${isShort ? 'R' : ' r'}estore this task ${
+    canRestore ? task.special ? `until ${getTextDate(borderDate)}` : 'later' : ''
+  }`;
+  return { canRestore: canRestore && restoreNow, restoreText };
+}
+
+export function isHistoryAvailable(task) {
+  if (task.special && task.period.length == 1) return false;
+  if (task.history.length) return true;
+  return undefined;
+}
+
+export function borderValues(value) {
+  value--;
+  if (value == -1) return 6;
+  if (value == 6) return -1;
+  return value;
+}
+
+export async function getHistory({task, onEmptyDays, onBlankDay, onActiveDay}) {
+  const creationDay = normalizeDate(task.created || task.id);
+  const startDay = new Date(creationDay > task.periodStart ? creationDay : task.periodStart);
+  let day = normalizeDate(startDay);
+  const emptyDays = borderValues(startDay.getDay());
+  if (onEmptyDays) for (let i = emptyDays; i > 0; i--) {
+    onEmptyDays(day - oneDay * i);
+  }
+  let periodCursor = creationDay > task.periodStart ? new Date(creationDay).getDay() : 0;
+  let hardUpdate = false;
+  const addValue = () => {
+    periodCursor++;
+    hardUpdate = false;
+    day += oneDay;
+    if (periodCursor >= task.period.length) {
+      periodCursor = 0;
+      hardUpdate = true;
+    }
+  };
+  for (let item of task.history) {
+    while (!task.period[periodCursor]) {
+      if (onBlankDay) onBlankDay(day);
+      addValue();
+    }
+    await onActiveDay(day, item); addValue();
+  }
+  periodCursor = borderValues(periodCursor + 1);
+  while (periodCursor <= task.periodDay && !hardUpdate && !task.period[task.periodDay]) {
+    if (onBlankDay) onBlankDay(day);
+    addValue();
+  }
 }

@@ -13,9 +13,25 @@ export function cleaner(dir) {
   };
 }
 
-export function renameCopiedFiles(srcDir, dir, name, ext, path) { // used by rollup-plugin-copy
+// for rollup-plugin-copy
+export function renameCopiedFiles(srcDir, dir, name, ext, path) {
   const folder = path.match(/[\w]+(?=\/[\w\d.-]+$)/)[0];
   return `./${dir}${folder !== srcDir ? `/${folder}` : ''}/${name}.${ext}`;
+}
+
+export function copyJSONs(srcDir, dir) {
+  return {
+    name: 'copyJSONs',
+    writeBundle() {
+      const files = fg.sync(`./${srcDir}/**/*.json`);
+      for (let path of files) {
+        const data = fs.readFileSync(path, 'utf8');
+        const outPath = path.replace(srcDir, dir);
+        const converted = JSON.stringify(JSON.parse(data));
+        fs.writeFileSync(outPath, converted);
+      }
+    }
+  };
 }
 
 export function generateFilesList(dir) {
@@ -24,7 +40,8 @@ export function generateFilesList(dir) {
     writeBundle() {
       const files = fg
         .sync([
-          `./${dir}/**/*`, `!./${dir}/index.html`, `!./${dir}/**/*.png`, `!./${dir}/**/*.jpg`
+          `./${dir}/**/*`, `!./${dir}/index.html`, `!./${dir}/sw.js`,
+          `!./${dir}/**/*.png`, `!./${dir}/**/*.jpg`
         ])
         .map((file) => file.replace(`/${dir}`, ''));
       files.push('./');

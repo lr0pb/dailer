@@ -1,5 +1,5 @@
 import { globQs as qs, globQsa as qsa } from '../../utils/dom.js'
-import { renderToggler, toggleFunc } from '../highLevel/taskThings.js'
+import { renderToggler, toggleFunc } from '../../ui/toggler.js'
 import { installApp } from '../../utils/appState.js'
 
 export async function isNotificationsAvailable(globals) {

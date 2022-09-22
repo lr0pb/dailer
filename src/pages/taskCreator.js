@@ -1,9 +1,10 @@
 import { getToday, convertDate, oneDay, getWeekStart } from './highLevel/periods.js'
-import { editTask, renderToggler, toggleFunc } from './highLevel/taskThings.js'
+import { editTask, getTaskRestoreInfo } from './highLevel/taskThings.js'
 import {
   qs, qsa, createOptionsList, show, showFlex, hide, getElements, getValue, getDate
 } from '../utils/dom.js'
 import { safeDataInteractions, syncGlobals, updateState } from '../utils/appState.js'
+import { renderToggler, toggleFunc } from '../ui/toggler.js'
 
 let taskTitle = null;
 
@@ -18,7 +19,7 @@ export const taskCreator = {
   styleClasses: 'doubleColumns',
   get header() { return `${emjs.paperWPen} <span id="taskAction">Add</span> task`},
   get page() { return `
-    <div>
+    <div class="columnFlex">
       <h3 id="nameTitle">Enter task you will control</h3>
       <input type="text" id="name" placeHolder="Task name">
       <h3>How important is this task?</h3>
@@ -36,16 +37,8 @@ export const taskCreator = {
       <div id="endDateToggler"></div>
       <h3 id="endDateTitle" class="endDate hidedUI">When stop to perform this task?</h3>
       <input type="date" id="endDate" class="endDate hidedUI">
-      <div id="editButtons">
-        <h3 class="first">Any of actions below cannot be cancelled</h3>
-        <div class="content first stretch">
-          <button id="restart" class="transparent">${emjs.reload} Restart task</button>
-          <button id="disable" class="transparent">${emjs.disabled} Disable task</button>
-          <button id="delete" class="transparent">${emjs.trashCan} Delete task</button>
-        </div>
-      </div>
     </div>
-    <div></div>
+    <div id="editButtons" class="columnFlex"></div>
   `},
   get footer() { return `
     <button id="back" class="secondary">${emjs.back} Back</button>
@@ -93,7 +86,7 @@ async function getPeriods(globals) {
   return { periods, periodsList };
 }
 
-async function onTaskCreator({globals, params}) {
+async function onTaskCreator({globals, page, params}) {
   const { back, startDate, period, date } = getElements('back', 'startDate', 'period', 'date');
   back.addEventListener('click', () => history.back());
   const session = await globals.db.getItem('settings', 'session');
@@ -145,7 +138,7 @@ async function onTaskCreator({globals, params}) {
     await checkPeriodPromo(globals);
   }
   qs('#saveTask').addEventListener('click', async () => {
-    await onSaveTaskClick(globals, session, td, isEdit);
+    await onSaveTaskClick(globals, td, isEdit);
   });
 }
 
@@ -182,32 +175,37 @@ async function checkPeriodPromo(globals) {
   });
 }
 
-async function onSaveTaskClick(globals, session, td, isEdit) {
+async function onSaveTaskClick(globals, td, isEdit) {
   const task = await createTask(globals, td);
   if (task == 'error') return globals.message({
     state: 'fail', text: 'Fill all fields'
   });
   qs('#saveTask').setAttribute('disabled', '');
-  await globals.db.updateItem('settings', 'session', (session) => {
+  const session = await globals.db.updateItem('settings', 'session', (session) => {
     session.lastTasksChange = Date.now();
   });
   globals.db.setItem('tasks', task);
   globals.message({ state: 'success', text: isEdit ? 'Task saved' : 'Task added' });
   if (!globals.pageInfo) globals.pageInfo = {};
   globals.pageInfo.dataChangedTaskId = task.id;
+  session.firstDayEver
+  ? history.back() : globals.paintPage('main', { replaceState: true });
   await globals.checkPersist();
-  if (!session.firstDayEver) return globals.paintPage('main', { replaceState: true });
-  history.back();
 }
 
 async function enterEditTaskMode(globals, td) {
   const periods = await globals.getPeriods();
   qs('#taskAction').innerHTML = 'Edit';
-  qs('#nameTitle').innerHTML = 'You can change task name only once';
-  const { name, date, dateTitle, endDate } = getElements('name', 'date', 'dateTitle', 'endDate');
+  //qs('#nameTitle').innerHTML = 'You can change task name only once';
+  const { name, priority, date, dateTitle, endDate } = getElements(
+    'name', 'priority', 'date', 'dateTitle', 'endDate'
+  );
   name.value = td.name;
-  if (td.nameEdited) name.disabled = 'disabled';
-  qs('#priority').value = td.priority;
+  priority.value = td.priority;
+  if (td.disabled) {
+    const disableElems = [name, priority];
+    disableElems.forEach((elem) => elem.setAttribute('disabled', ''));
+  }
   const per = periods[td.periodId];
   date.value = convertDate(td.periodStart);
   if (td.periodStart > getToday() && per.selectTitle) {
@@ -218,13 +216,13 @@ async function enterEditTaskMode(globals, td) {
     }
     show(date);
   }
-  if (td.endDate) {
+  if (td.endDate && !td.disabled) {
     qs('[data-id="enableEndDate"]').activate();
     endDate.value = convertDate(td.endDate - oneDay);
-  } else if (td.special == 'oneTime') {
+  } else if (td.special == 'oneTime' || td.disabled) {
     hide('[data-id="enableEndDate"]');
   }
-  if (td.special == 'untilComplete') {
+  if (td.special == 'untilComplete' && !td.disabled) {
     if (td.wishlist) qs('[data-id="wishlist"]').activate();
     show('h3.wishlist');
   } else {
@@ -235,16 +233,32 @@ async function enterEditTaskMode(globals, td) {
 }
 
 function enableEditButtons(globals, td) {
-  show('#editButtons');
+  const { canRestore, restoreText } = getTaskRestoreInfo(td);
+  qs('#editButtons').innerHTML = `
+    <h3>Any of the actions below cannot be cancelled</h3>
+    <div class="content stretch">
+      ${dailerData.experiments && canRestore ? `
+        <button id="restart" class="transparent first">${emjs.reload} ${
+          td.disabled ? `Restore task` : `Run task from scratch`
+        }</button>
+        <h3>${!td.special ? `${emjs.warning} Previous history will be removed` : restoreText}</h3>
+      ` : ''}
+      ${!td.disabled ? `
+        <button id="disable" class="transparent first">${emjs.book} Put task to the archive</button>
+        <h3>${restoreText}</h3>
+      ` : ''}
+      <button id="delete" class="transparent first">${emjs.trashCan} Delete task for ever</button>
+    </div>
+  `;
   if (dailerData.experiments) {
-    qs('#restart').addEventListener('click', async () => {
+    qs('#restart')?.addEventListener('click', async () => {
       globals.message({
         state: 'success', text: `Restart is not available at the time`
       });
     });
-  } else qs('#restart').remove();
+  }
   const onConfirm = () => history.back();
-  qs('#disable').addEventListener('click', async () => {
+  qs('#disable')?.addEventListener('click', async () => {
     await editTask({ globals, id: td.id, field: 'disabled', onConfirm });
   });
   qs('#delete').addEventListener('click', async () => {

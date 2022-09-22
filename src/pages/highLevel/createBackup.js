@@ -14,6 +14,7 @@ export async function downloadData(globals) {
   await globals.db.updateItem('settings', 'backupReminder', (remind) => {
     if (remind.nextRemind === getToday() && !remind.isDownloaded) {
       remind.isDownloaded = true;
+      remind.lastTimeDownloaded = getToday();
       const elem = qs('.floatingMsg[data-id="backupReminder"]');
       if (elem) elem.remove();
     }

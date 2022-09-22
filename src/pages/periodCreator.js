@@ -1,6 +1,7 @@
-import { renderToggler, toggleFunc } from './highLevel/taskThings.js'
+import { renderToggler, toggleFunc } from '../ui/toggler.js'
+import { togglableElement } from '../ui/togglableElement.js'
 import {
-  qs, qsa, globQs, globQsa, handleKeyboard, togglableElement, copyArray, hide, getValue
+  qs, qsa, globQs, globQsa, handleKeyboard, copyArray, hide, getValue
 } from '../utils/dom.js'
 import { safeDataInteractions, syncGlobals } from '../utils/appState.js'
 import { paintPeriods } from './settings/periods.js'
@@ -16,25 +17,29 @@ export const periodCreator = {
   },
   get titleEnding() { return periodTitle ? 'line' : 'text'; },
   dynamicTitle: true,
+  styleClasses: 'doubleColumns',
   get header() { return `${emjs.calendar} <span id="periodAction">Create</span> period`},
   get page() { return `
-    <h3>Enter period title</h3>
-    <input type="text" id="periodName" placeHolder="Period title e.g 'Every friday'">
-    <h3>You also can type period description</h3>
-    <input type="text" id="periodDesc" placeHolder="Period description">
-    <h3 class="excludeInEdit">How much days will be in period?</h3>
-    <input type="range" id="daysCount" class="excludeInEdit" min="1" max="${maxDays}" value="${maxDays}">
-    <h3 class="excludeInEdit">Select the days you need to perform the task</h3>
-    <h3 class="excludeInEdit">At least one selected day is required</h3>
-    <div>
-      <div class="historyMonth" focusgroup="horizontal"></div>
+    <div class="columnFlex">
+      <h3>Enter period title</h3>
+      <input type="text" id="periodName" placeHolder="Period title e.g 'Every friday'">
+      <h3>You also can type period description</h3>
+      <input type="text" id="periodDesc" placeHolder="Period description">
+      <h3 class="excludeInEdit">How much days will be in period?</h3>
+      <input type="range" id="daysCount" class="excludeInEdit" min="1" max="${maxDays}" value="${maxDays}">
+      <h3 class="excludeInEdit">Select the days you need to perform the task</h3>
+      <h3 class="excludeInEdit">At least one selected day is required</h3>
+      <div>
+        <div class="historyMonth" focusgroup="horizontal"></div>
+      </div>
+      <div class="togglerContainer first"></div>
+      <h3 class="excludeInEdit">When period is over, it will repeat again</h3>
+      <div class="togglerContainer first"></div>
+      <h3 class="excludeInEdit">Period days will be linked to the week days<!--, no matter when you start task with this period--></h3>
+      <div class="togglerContainer first"></div>
+      <h3>This period will be selected by default when you creating new tasks</h3>
     </div>
-    <div class="togglerContainer first"></div>
-    <h3 class="excludeInEdit">When period is over, it will repeat again</h3>
-    <div class="togglerContainer first"></div>
-    <h3 class="excludeInEdit">Period days will be linked to the week days<!--, no matter when you start task with this period--></h3>
-    <div class="togglerContainer first"></div>
-    <h3>This period will be selected by default when you creating new tasks</h3>
+    <div></div>
   `},
   get footer() { return `
     <button id="back" class="secondary">${emjs.back} Back</button>
@@ -85,7 +90,8 @@ async function onPeriodCreator({globals, page, params}) {
   renderToggler({
     name: 'Period will be looped', id: 'isRepeatable',
     toggler: isEdit ? emjs[per.special == 'oneTime' ? 'blank' : 'sign'] : emjs.sign,
-    page: containers[0], value: isEdit ? (per.special == 'oneTime' ? 0 : 1) : 1, disabled: isEdit
+    page: containers[0], value: isEdit ? (per.special == 'oneTime' ? 0 : 1) : 1,
+    disabled: isEdit
   });
   renderToggler({
     name: 'Week linked period', id: 'getWeekStart',

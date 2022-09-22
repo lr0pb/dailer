@@ -1,6 +1,6 @@
 import { pages } from './pages.js'
 import {
-  qs as localQs, globQs as qs, globQsa as qsa, copyArray, copyObject, inert, showFlex, hide
+  qs as localQs, globQs as qs, globQsa as qsa, copyArray, copyObject, inert, showFlex, hide, show
 } from '../utils/dom.js'
 import { getParams } from '../utils/appState.js'
 
@@ -80,6 +80,12 @@ async function _setCacheConfig() {
 async function paintPage(name, {
   dontPushHistory, replaceState, noAnim, params, dontClearParams
 } = {}) {
+  const timeLog = performance ? {
+    page: name,
+    build: performance.now(),
+    showPage: null,
+    script: null,
+  } : {};
   globals.pageName = name;
   globals.isPageReady = false;
   const page = pages[name];
@@ -95,7 +101,7 @@ async function paintPage(name, {
       </button>
     </div>
     <div class="content">${page.page}</div>
-    <div class="footer">${page.footer}</div>
+    <div class="footer abs">${page.footer}</div>
   `;
   container.addEventListener('transitionend', (e) => {
     if (!e.target.classList.contains('page')) return;
@@ -109,7 +115,9 @@ async function paintPage(name, {
   if (page.styleClasses && page.styleClasses.includes('doubleColumns')) {
     content.setAttribute('focusgroup', 'horizontal');
   }
+  if (performance) timeLog.showPage = performance.now();
   await showPage(globals, qs('.current'), container, noAnim);
+  if (performance) timeLog.showPage = performance.now() - timeLog.showPage;
   const args = page.noSettings ? [undefined] : ['click', () => globals.openSettings()];
   container.querySelector('.openSettings')[page.noSettings ? 'remove' : 'addEventListener'](...args);
   const link = getPageLink(name, convertParams(params), dontClearParams);
@@ -128,8 +136,16 @@ async function paintPage(name, {
   container.classList.remove('hided');
   container.classList.add('current');
   if (!params) params = getParams(`${dailerData.nav ? location.origin : ''}${link}`);
+  if (performance) {
+    timeLog.build = performance.now() - timeLog.build;
+    timeLog.script = performance.now();
+  }
   await page.script({ globals, page: content, params });
   globals.isPageReady = true;
+  if (performance) {
+    timeLog.script = performance.now() - timeLog.script;
+    console.log(timeLog);
+  }
 }
 
 function message({state, text}) {
@@ -140,19 +156,25 @@ function message({state, text}) {
   setTimeout( () => { msg.classList.remove('animate') }, 3000);
 }
 
-function openPopup({text, action, emoji, strictClosing}) {
+function openPopup({emoji, text, description, action, strictClosing}) {
   const popup = qs('#popup');
   if (strictClosing) popup.classList.add('strictClosing');
-  showFlex(popup);
+  popup.style.visibility = 'visible';
   inert.set(qs(globals.settings ? '#settings' : '.current'));
   inert.remove(popup, popup.querySelector('[data-action="cancel"]'));
   qs('#popup h2.emoji').innerHTML = emoji;
   qs('#popup h2:not(.emoji)').innerHTML = text;
+  if (description) {
+    show('#popup h3', description, true);
+  } else {
+    hide('#popup h3', true);
+  }
   popup.querySelector('[data-action="confirm"]').onclick = async () => {
     await action();
     globals.closePopup();
   };
   requestAnimationFrame(() => {
+    popup.ontransitionend = null;
     popup.classList.add('showPopup');
     popup.querySelector('div').style.transitionTimingFunction = 'ease';
   });
@@ -163,9 +185,9 @@ function closePopup(dontImpactToNavigation) {
   inert.remove(qs(globals.settings ? '#settings' : '.current'));
   inert.set(popup);
   popup.classList.remove('showPopup', 'strictClosing');
+  popup.style.visibility = 'hidden';
   if (popup.hasAttribute('style')) popup.ontransitionend = () => {
     popup.ontransitionend = null;
-    hide(popup);
     popup.querySelector('div').removeAttribute('style');
   };
   qs('[data-action="confirm"]').onclick = null;
@@ -213,11 +235,7 @@ function floatingMsg({id, text, button, longButton, onClick, pageName, notFixed}
     const existentDiv = localQs('.floatingDiv');
     const div = existentDiv || document.createElement('div');
     if (!existentDiv) div.className = 'floatingDiv';
-    div.style.cssText = `
-      min-height: ${elem.getBoundingClientRect().height}px;
-      min-width: 1px;
-      margin-top: 2rem;
-    `;
+    div.style.minHeight = `${elem.getBoundingClientRect().height}px`;
     if (!existentDiv) {
       const isReady = () => {
         if (globals.isPageReady) return content.append(div);
@@ -272,6 +290,12 @@ async function checkPersist() {
   return response;
 }
 
+function getPageShowArgs(globals, elem) {
+  return {
+    globals, page: qs(`#${elem.id} .content`), params: getParams()
+  };
+}
+
 export async function showPage(globals, prev, current, noAnim, noCleaning) {
   prev.style.willChange = 'transform';
   current.style.willChange = 'transform';
@@ -287,18 +311,18 @@ export async function showPage(globals, prev, current, noAnim, noCleaning) {
   }
   noAnim ? addShowing() : requestAnimationFrame(addShowing);
   if (!noCleaning) {
-    for (let elem of qsa('.hided')) {
+    qsa('.hided').forEach((elem) => {
       elem.remove();
       inert.clearCache(elem);
-    }
+    });
   } else {
     current.classList.add('current');
     if (pages[current.id].onPageShow) {
-      await pages[current.id].onPageShow({globals, page: qs(`#${current.id} .content`)});
+      await pages[current.id].onPageShow(getPageShowArgs(globals, current));
     }
   }
   return new Promise((res) => {
-    const isDone = () => {done ? res() : setTimeout(isDone, 5)};
+    const isDone = () => { done ? res() : requestAnimationFrame(isDone) };
     isDone();
   });
 }
@@ -319,6 +343,6 @@ export async function hidePage(globals, current, prevName, noPageUpdate) {
   current.classList.remove('showing', 'current');
   current.classList.add('hided');
   if (!noPageUpdate && pages[prev.id].onPageShow) {
-    await pages[prev.id].onPageShow({globals, page: qs(`#${prev.id} .content`)});
+    await pages[prev.id].onPageShow(getPageShowArgs(globals, prev));
   }
 }

@@ -1,9 +1,10 @@
-import { isUnder3AM, getToday, oneDay, isCustomPeriod } from './highLevel/periods.js'
-import { qs, globQs } from '../utils/dom.js'
+import { isUnder3AM, getToday } from './highLevel/periods.js'
+import { qs } from '../utils/dom.js'
 import { installApp } from '../utils/appState.js'
-import { renderTask, setPeriodTitle } from './highLevel/taskThings.js'
+import { renderTask } from './highLevel/taskThings.js'
 import { downloadData } from './highLevel/createBackup.js'
 import { isNotificationsAvailable, requestNotifications } from './settings/notifications.js'
+import { popups } from './popups.js'
 
 export const main = {
   get header() { return `${emjs.sword} Today's tasks`},
@@ -19,9 +20,11 @@ export const main = {
   script: async ({globals, page}) => {
     qs('#toPlan').addEventListener('click', () => globals.paintPage('planCreator'));
     if (dailerData.experiments) {
-      globals.pageButton({ emoji: emjs.star, title: 'Open wishlist', onClick: async () => {
-        await globals.paintPage('wishlist');
-      } });
+      globals.pageButton({
+        emoji: emjs.star, title: 'Open wishlist', onClick: async () => {
+          await globals.paintPage('wishlist');
+        }
+      });
     } else {
       qs('#toHistory').style.display = 'none';
     }
@@ -61,7 +64,9 @@ async function renderDay({globals, page}) {
     const tasks = day.tasks[i];
     for (let id in tasks) {
       const td = await globals.db.getItem('tasks', id);
-      renderTask({ type: 'day', globals, td, page, openTask: true });
+      renderTask(globals, td, page, {
+        completeTask: true, openTask: true
+      });
     }
   }
   if (!dailerData.isDoubleColumns) addTaskButton(globals, page, 'task', 'transparent');
@@ -140,6 +145,7 @@ async function checkBackupReminder(globals) {
       await processChecks(globals);
     }
   });
+  if (resp.popup) globals.openPopup(popups.downloadBackup(globals));
   return true;
 }
 

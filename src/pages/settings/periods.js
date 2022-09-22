@@ -1,5 +1,5 @@
 import { globQs as qs } from '../../utils/dom.js'
-import { renderToggler, toggleFunc } from '../highLevel/taskThings.js'
+import { renderToggler, toggleFunc } from '../../ui/toggler.js'
 import { isCustomPeriod } from '../highLevel/periods.js'
 
 const periodsCount = 5;
@@ -10,7 +10,7 @@ export async function paintPeriods(globals) {
   const periods = await globals.getPeriods();
   const periodData = await globals.db.getItem('settings', 'periods');
   const editTitle = 'View or edit period';
-  const markTitle = (per) => `Add period${per ? ` "${per}"` : ''} to drop down list`;
+  const markTitle = (per) => `Add period${per ? ` '${per}'` : ''} to drop down list`;
   pc.innerHTML = '';
   for (let per in periods) {
     const period = periods[per];
@@ -31,11 +31,13 @@ export async function paintPeriods(globals) {
     }
     const used = getPeriodUsed(periodData.list, per);
     buttons.push({
-      emoji: emjs[used ? 'sign' : 'blank'], value: used,
+      emoji: emjs[used ? 'sign' : 'blank'],
       title: markTitle(), aria: markTitle(period.title),
       func: updatePeriodsList, args: { globals, periodsCount }
     });
-    renderToggler({ name: period.title, id: period.id, page: pc, buttons });
+    renderToggler({
+      name: period.title, id: period.id, page: pc, value: used, buttons
+    });
   }
 }
 

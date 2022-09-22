@@ -1,5 +1,5 @@
 import {
-  cleaner, renameCopiedFiles, generateFilesList, insertEnvVariables
+  cleaner, renameCopiedFiles, copyJSONs, generateFilesList, insertEnvVariables
 } from './custom-rollup-plugins.js'
 //import { nodeResolve } from '@rollup/plugin-node-resolve'
 import { terser } from 'rollup-plugin-terser'
@@ -12,19 +12,23 @@ import fg from 'fast-glob'
 const isServe = process.env.SERVE;
 const isDev = process.env.DEV;
 
+const base = './src/**/*'
+
 const mainPlugins = [
   cleaner('out'),
   copy({
     targets: [{
-      src: fg.sync(['./src/**/*', '!./src/**/*.js']),
+      src: fg.sync([base, `!${base}.js`, `!${base}.json`]),
       dest: './', rename: (...args) => renameCopiedFiles('src', 'out', ...args)
     }],
     flatten: true
   }),
-  generateFilesList('out'),
+  copyJSONs('src', 'out'),
   insertEnvVariables('out'),
 ];
-const workerPlugins = [];
+const workerPlugins = [
+  generateFilesList('out'),
+];
 
 if (isServe) {
   mainPlugins.push(serve({

@@ -1,10 +1,7 @@
 import {
-  env, database, IDB,
-  getRawDate, isUnder3AM, oneDay, normalizeDate, getToday, isCustomPeriod,
-  intlDate, getTextDate, setPeriodTitle
+  env, getToday
 } from './defaultFunctions.js'
 import {
-  updatePeriods, createDay, getRawDay, setDefaultPeriodTitle, disable, afterDayEnded,
   getYesterdayRecap, checkBackupReminder
 } from './sharedFunctions.js'
 

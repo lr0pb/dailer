@@ -1,5 +1,5 @@
-import { renderToggler, toggleFunc } from './highLevel/taskThings.js'
-import { globQs as qs, convertEmoji } from '../utils/dom.js'
+import { renderToggler, toggleFunc } from '../ui/toggler.js'
+import { globQs as qs } from '../utils/dom.js'
 import { uploadData } from './highLevel/uploadBackup.js'
 import { downloadData } from './highLevel/createBackup.js'
 import { toggleExperiments } from './highLevel/settingsBackend.js'
@@ -12,7 +12,7 @@ export const settings = {
   sections: ['periods', 'manageData', 'notifications', 'about'],
   fillHeader: ({page}) => {
     page.innerHTML = `
-      <h4>${settings.title}</h4>
+      <h1>${settings.title}</h1>
       <button id="closeSettings" class="emojiBtn" title="Close settings" aria-label="Close settings">
         ${emjs.cross}
       </button>
@@ -29,7 +29,7 @@ export const settings = {
       <button id="toPeriodCreator">${emjs.calendar} Create custom period</button>
       <h2 data-section="manageData">Data management</h2>
       <div class="floatingMsg notFixed">
-        <h3>${emjs.lockWKey} Your data stored on your device and cannot be remotely accessed</h3>
+        <h3>${emjs.lockWKey} Your data is stored on your device & can't be remotely accessed</h3>
       </div>
       <div class="doubleColumns">
         <div class="content">
@@ -46,7 +46,7 @@ export const settings = {
           <h3 class="uploadSuccess">Upload successfully completed, go back to check the tasks</h3>
           <button id="getData" class="success">${emjs.crateDown} Backup your current data</button>
           <progress class="downloadUI"></progress>
-          <a id="downloadData" class="downloadLink" aria-hidden="true"></a>
+          <a id="downloadData" class="downloadLink" download="" aria-hidden="true"></a>
         </div>
         <div>
           <h3>Set up a reminder to create backups periodically. You will able to download it just from app's main screen</h3>

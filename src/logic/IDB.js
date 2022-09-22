@@ -10,7 +10,7 @@ export const database = {
   ],
   settings: {
     'notifications': 1, 'periodicSync': 1, 'persistentStorage': 1,
-    'backupReminder': 3, 'session': 1, 'periods': 1,
+    'backupReminder': 4, 'session': 2, 'periods': 1,
   }
 };
 

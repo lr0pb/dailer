@@ -1,14 +1,8 @@
 import {
-  env, database, IDB,
-  getRawDate, isUnder3AM, oneDay, normalizeDate, getToday, isCustomPeriod,
-  intlDate, getTextDate, setPeriodTitle
+  env, database, IDB
 } from './workers/defaultFunctions.js'
 import {
-  updatePeriods, createDay, getRawDay, setDefaultPeriodTitle, disable, afterDayEnded,
-  getYesterdayRecap, checkBackupReminder
-} from './workers/sharedFunctions.js'
-import {
-  proccessNotifications, cleaning, showNotification, getDayRecap
+  proccessNotifications
 } from './workers/notifications.js'
 
 const APP_CACHE = 'app-06.09';
@@ -16,7 +10,7 @@ const EMOJI_CACHE = 'emoji-24.07';
 const HUGE_TIMEOUT = 550;
 const SMALL_TIMEOUT = 300;
 
-let USE_CACHE_INSTEAD_NETWORL = false;
+let USE_CACHE_INSTEAD_NETWORK = false;
 
 if (!('at' in Array.prototype)) {
   function at(n) {
@@ -47,11 +41,6 @@ function getEmojiLink(emoji) {
   return `https://raw.githubusercontent.com/googlefonts/noto-emoji/main/svg/emoji_u${
     emoji
   }.svg`;
-}
-
-function getBaseLink() {
-  const path = location.pathname.replace(/[\w.]+$/, '');
-  return `${location.origin}${path}`;
 }
 
 async function saveCacheOnInstall() {
@@ -117,7 +106,7 @@ self.addEventListener('fetch', (e) => {
 
 async function addCache(request, cacheName) {
   if (!navigator.onLine) return null;
-  if (USE_CACHE_INSTEAD_NETWORL) return null;
+  if (USE_CACHE_INSTEAD_NETWORK) return null;
   let fetchResponse = null;
   const url = request.url;
   const params = url.match(/(?:\/)([\w\&=\.\?]+)$/);
@@ -136,7 +125,7 @@ async function addCache(request, cacheName) {
       }),
       fetch(request)
     ]);
-    if (!response && timeout == HUGE_TIMEOUT) USE_CACHE_INSTEAD_NETWORL = true;
+    if (!response && timeout == HUGE_TIMEOUT) USE_CACHE_INSTEAD_NETWORK = true;
     if (response && response.ok) {
       const cache = await caches.open(cacheName);
       cache.put(request, response.clone());
@@ -177,6 +166,11 @@ async function checkNotifications(tag) {
   await env.db.setItem('settings', periodicSync);
   if (!notifs.enabled || notifs.permission !== 'granted') return;
   await proccessNotifications(notifs, tag);
+}
+
+function getBaseLink() {
+  const path = location.pathname.replace(/[\w.]+$/, '');
+  return `${location.origin}${path}`;
 }
 
 async function openApp({ timestamp, data }) {

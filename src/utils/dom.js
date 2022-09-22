@@ -12,14 +12,14 @@ function q(func, elem, page, local) {
   return document[func](`${local ? '.current ' : ''}${elem}`);
 }
 
-function rawShow(display, elem, data) {
-  if (typeof elem === 'string') elem = qs(elem);
+function rawShow(display, elem, data, isGlob) {
+  if (typeof elem === 'string') elem = (isGlob ? globQs : qs)(elem);
   if (data && typeof data !== 'number') elem.innerHTML = data;
   elem.style.display = display;
 }
 export const show = (...args) => rawShow('block', ...args);
 export const showFlex = (...args) => rawShow('flex', ...args);
-export const hide = (elem) => rawShow('none', elem);
+export const hide = (elem, isGlob) => rawShow('none', elem, null, isGlob);
 
 export function getElements(...elems) {
   const resp = {};
@@ -83,26 +83,6 @@ export function handleKeyboard(elem, noBubbeling) {
   });
 }
 
-const transform = 'translateY(3rem)';
-
-export function togglableElement(elem, styleCode) {
-  if (!elem || !styleCode) return;
-  elem.classList.add('togglableElement');
-  elem.setStyle = (styleCode) => {
-    if (!['hided', 'showing'].includes(styleCode)) return;
-    if (elem.children.length !== 2) return;
-    elem.dataset.styleCode = styleCode;
-    const value = styleCode == 'showing' ? 1 : 0;
-    elem.children[0].style.transform = value ? 'none' : transform;
-    elem.children[1].style.opacity = value;
-  };
-  elem.toggleStyle = () => {
-    const newStyle = elem.dataset.styleCode == 'hided' ? 'showing' : 'hided';
-    elem.setStyle(newStyle);
-  };
-  elem.setStyle(styleCode);
-}
-
 const focusables = [
   'button:not(:disabled)', 'input:not(:disabled)', '[role="button"]:not([disabled])'
 ].join(', ');
@@ -141,5 +121,8 @@ export const inert = {
     if (elemToFocus) elemToFocus.focus();
   },
   _cache: new Map(),
-  clearCache(elem) { inert._cache.delete(elem); }
+  clearCache(elem) {
+    if (dailerData.inert) return;
+    inert._cache.delete(elem);
+  }
 };

@@ -58,19 +58,53 @@ window.addEventListener('unhandledrejection', (e) => {
 window.addEventListener('pageshow', appEntryPoint);
 
 async function appEntryPoint(e) {
+  const timeLog = performance ? {
+    wholeTime: performance.now(),
+    openDb: performance.now(),
+    deployWorkers: null,
+    loadEmoji: null,
+    processSettings: null,
+    paintUnvisibles: null,
+    startApp: null,
+  } : {};
   createDb();
   if (e.persisted) return;
+  if (performance) {
+    timeLog.openDb = performance.now() - timeLog.openDb;
+    timeLog.deployWorkers = performance.now();
+  }
   document.documentElement.lang = navigator.language;
   const { worker, periodicSync } = await deployWorkers();
   globals.worker = worker;
-  await loadEmojiList();
+  if (performance) {
+    timeLog.deployWorkers = performance.now() - timeLog.deployWorkers;
+    timeLog.processSettings = performance.now();
+  }
   await processSettings(globals, periodicSync);
+  if (performance) {
+    timeLog.processSettings = performance.now() - timeLog.processSettings;
+    timeLog.loadEmoji = performance.now();
+  }
+  await enableEmojis();
+  if (performance) {
+    timeLog.loadEmoji = performance.now() - timeLog.loadEmoji;
+    timeLog.paintUnvisibles = performance.now();
+  }
   toggleExperiments();
   pages.settings.fillHeader({page: qs('#settings > .header')});
   await pages.settings.paint({globals, page: qs('#settings > .content')});
   inert.set(qs('#settings'), true);
   inert.set(qs('#popup'), true);
+  if (performance) {
+    timeLog.paintUnvisibles = performance.now() - timeLog.paintUnvisibles;
+    timeLog.startApp = performance.now();
+  }
   dailerData.nav ? await startApp() : await renderPage(e, false, globals);
+  if (performance) {
+    timeLog.startApp = performance.now() - timeLog.startApp;
+    timeLog.wholeTime = performance.now() - timeLog.wholeTime;
+    console.log(timeLog);
+  }
 }
 
 window.addEventListener('pagehide', () => {
@@ -85,6 +119,7 @@ function createDb() {
 }
 
 async function unregisterPreviousSW() {
+  if (window.opener) window.opener.close();
   const regs = await navigator.serviceWorker.getRegistrations();
   for (let reg of regs) {
     if (!reg.active.scriptURL.includes('/tools')) continue;
@@ -143,22 +178,22 @@ function setCallListener(worker) {
   };
 }
 
-function getEmojiLink(emoji) {
-  return `https://raw.githubusercontent.com/googlefonts/noto-emoji/main/svg/emoji_u${
-    _emojiList[emoji]
-  }.svg`;
-}
-
-async function loadEmojiList() {
+async function enableEmojis() {
+  const timeLog = performance ? {
+    json: performance.now(),
+    images: null,
+  } : {};
   const resp = await fetch('./emoji.json');
   window._emojiList = await resp.json();
-  const loadArray = [];
-  const isAppleEmoji = dailerData.isIOS || dailerData.isMacOS;
-  if (!isAppleEmoji) for (let name in _emojiList) {
-    const link = getEmojiLink(name);
-    loadArray.push(fetch(link));
+  if (performance) {
+    timeLog.json = performance.now() - timeLog.json;
+    timeLog.images = performance.now();
   }
-  await Promise.all(loadArray);
+  const isAppleEmoji = await setEmojiLoad();
+  if (performance) {
+    timeLog.images = performance.now() - timeLog.images;
+    console.log(timeLog);
+  }
   window.emjs = new Proxy({}, {
     get(target, prop) {
       if (!(prop in _emojiList)) return '';
@@ -169,6 +204,36 @@ async function loadEmojiList() {
     }
   });
   window.hasEmoji = (elem) => typeof elem == 'string' ? elem.includes('emojiSymbol') : undefined;
+}
+
+function getEmojiLink(emoji) {
+  return `https://raw.githubusercontent.com/googlefonts/noto-emoji/main/svg/emoji_u${
+    _emojiList[emoji]
+  }.svg`;
+}
+
+async function setEmojiLoad() {
+  const isAppleEmoji = dailerData.isIOS || dailerData.isMacOS;
+  const session = await globals.db.getItem('settings', 'session');
+  const isDiffVersions = window._emojiList.lastModified !== session.emojiLastModified;
+  session.emojiLastModified = window._emojiList.lastModified;
+  await globals.db.setItem('settings', session);
+  if (!isAppleEmoji && isDiffVersions) {
+    qs('#loadingText').innerHTML = `Loading updated assets...`;
+    await loadEmojis();
+  }
+  delete window._emojiList.lastModified;
+  return isAppleEmoji;
+}
+
+async function loadEmojis() {
+  const loadArray = [];
+  for (let name in window._emojiList) {
+    if (name == 'lastModified') continue;
+    const link = getEmojiLink(name);
+    loadArray.push(fetch(link));
+  }
+  await Promise.all(loadArray);
 }
 
 async function startApp() {
@@ -212,6 +277,7 @@ async function restoreApp(appHistory) {
     from: {index: appHistory.length - 1},
     destination: {index: navigation.currentEntry.index}
   }, true);
+  await updatePageTitle();
   globals.message({
     state: 'success', text: 'Previously opened dailer session has been fully restored'
   });

@@ -2,8 +2,17 @@ import { database } from '../../logic/IDB.js'
 import { globQs as qs, globQsa as qsa } from '../../utils/dom.js'
 
 export async function processSettings(globals, periodicSync) {
+  const timeLog = performance ? {
+    dbLoad: performance.now(),
+    setSettings: null,
+  } : {};
+  await globals.db._isDbReady();
   const session = await globals.db.getItem('settings', 'session');
   if (session) dailerData.experiments = session.experiments;
+  if (performance) {
+    timeLog.dbLoad = performance.now() - timeLog.dbLoad;
+    timeLog.setSettings = performance.now();
+  }
   await Promise.all([
     setPeriods(globals),
     addNotifications(globals),
@@ -11,7 +20,7 @@ export async function processSettings(globals, periodicSync) {
     addPersistentStorage(globals),
     addBackupReminder(globals),
     addSession(globals),
-    addPeriodsSettings(globals)
+    addPeriodsSettings(globals),
   ]);
   await globals.db.onDataUpdate('settings', async (store, item) => {
     if (!item) return;
@@ -21,6 +30,10 @@ export async function processSettings(globals, periodicSync) {
   await globals.db.onDataUpdate('periods', async (store, item) => {
     await globals.worker.call({ process: 'updatePeriods' });
   });
+  if (performance) {
+    timeLog.setSettings = performance.now() - timeLog.setSettings;
+    console.log(timeLog);
+  }
 }
 
 export function toggleExperiments() {
@@ -120,7 +133,7 @@ async function addPersistentStorage(globals) {
 
 async function addBackupReminder(globals) {
   const resp = await checkRecord(globals, 'backupReminder', null, (data) => {
-    if (data.version === 1) {
+    if (data.version == 1) {
       data.id = data.remindId;
       data.value = data.remindValue;
       data.isDownloaded = data.reminded;
@@ -128,7 +141,12 @@ async function addBackupReminder(globals) {
       data.knowAboutFeature = data.id ? true : false;
       data.firstPromoDay = null;
       data.daysToShowPromo = 4;
-    } else data.dayToStartShowPromo = 17;
+    } else if (data.version == 2) {
+      data.dayToStartShowPromo = 17;
+    } else {
+      data.lastTimeDownloaded = 0;
+      data.daysToShowPopup = 11;
+    }
   });
   if (resp) return;
   await globals.db.setItem('settings', {
@@ -136,6 +154,8 @@ async function addBackupReminder(globals) {
     id: localStorage.remindId ? localStorage.remindId : null,
     value: localStorage.remindValue ? Number(localStorage.remindValue) : null,
     isDownloaded: localStorage.reminded ? (localStorage.reminded == 'true' ? true : false) : false,
+    lastTimeDownloaded: 0,
+    daysToShowPopup: 11,
     nextRemind: localStorage.nextRemind ? Number(localStorage.nextRemind) : null,
     knowAboutFeature: localStorage.remindId ? true : false,
     dayToStartShowPromo: 17,
@@ -146,7 +166,11 @@ async function addBackupReminder(globals) {
 }
 
 async function addSession(globals) {
-  const resp = await checkRecord(globals, 'session');
+  const resp = await checkRecord(globals, 'session', null, (data) => {
+    if (data.version == 1) {
+      data.emojiLastModified = 0;
+    }
+  });
   if (resp) {
     if (
       dailerData.isDev || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone
@@ -164,6 +188,7 @@ async function addSession(globals) {
     recaped: localStorage.recaped ? Number(localStorage.recaped) : 0,
     updateTasksList: localStorage.updateTasksList ? JSON.parse(localStorage.updateTasksList) : [],
     experiments: localStorage.experiments ? Number(localStorage.experiments) : 0,
+    emojiLastModified: 0,
     version: database.settings.session
   });
 }

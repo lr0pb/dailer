@@ -1,5 +1,5 @@
 import { getToday, oneDay } from './highLevel/periods.js'
-import { qs, qsa, show, hide, getElements } from '../utils/dom.js'
+import { qs, qsa, show, hide, getElements, showFlex } from '../utils/dom.js'
 import { renderTask } from './highLevel/taskThings.js'
 
 export const recap = {
@@ -14,7 +14,7 @@ export const recap = {
       Check the tasks you didn't complete and if needed mark the ones you forgot
     </h3>
     <div class="forgotten content doubleColumns first" id="tasks" focusgroup="horizontal"></div>
-    <h3 class="forgotten">Tasks with period "Until complete" not counting as not completed</h3>
+    <h3 class="forgotten">Tasks with period <strong>Until complete</strong> do not count as incomplete</h3>
   `},
   get footer() { return `
     <button id="toMain">${emjs.forward} Proceed to today</button>
@@ -53,18 +53,18 @@ export const recap = {
       qs('#congrats').innerHTML += counter.parentElement.innerHTML;
       return;
     }
+    qsa('.forgotten').forEach(show);
     const container = qs('#tasks.forgotten');
-    for (let elem of qsa('.forgotten')) {
-      elem.style.display = 'flex';
-    }
+    showFlex(container);
+    const completeCallback = async (actualDay, value) => {
+      completedTasks += 1 * (value ? 1 : -1);
+      await completeDay(actualDay);
+      updateUI();
+    };
     for (let id of day.forgottenTasks) {
       const td = await globals.db.getItem('tasks', id);
-      renderTask({
-        type: 'day', globals, td, extraFunc: async (actualDay, value) => {
-          completedTasks += 1 * (value ? 1 : -1);
-          await completeDay(actualDay);
-          updateUI();
-        }, page: container, forcedDay: date
+      renderTask(globals, td, container, {
+        completeTask: true, customDay: date, completeCallback
       });
     }
   }

@@ -1,9 +1,8 @@
 import { globQs as qs, globQsa as qsa, show, hide } from '../../utils/dom.js'
-import { intlDate } from './periods.js'
-import { getToday, oneDay, isCustomPeriod } from './periods.js'
+import { getToday, oneDay, intlDate, isCustomPeriod } from './periods.js'
 import { createPeriod } from '../periodCreator.js'
 import { createTask } from '../taskCreator.js'
-import { isHistoryAvailable, getHistory } from '../taskInfo.js'
+import { isHistoryAvailable, getHistory } from './taskThings.js'
 
 export async function uploadData(globals, paintPeriods) {
   const chooser = qs('#chooseFile');
@@ -27,7 +26,7 @@ export async function uploadData(globals, paintPeriods) {
       });
       await uploading(globals, data);
       await paintPeriods(globals);
-      qs(`[data-section="import"]`).scrollIntoView();
+      qs(`[data-section="manageData"]`).scrollIntoView();
     };
   });
   chooser.click();

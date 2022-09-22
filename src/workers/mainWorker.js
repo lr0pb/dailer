@@ -1,10 +1,10 @@
 import {
   env, database, IDB,
-  getRawDate, isUnder3AM, oneDay, normalizeDate, getToday, isCustomPeriod,
-  intlDate, getTextDate, setPeriodTitle
+  oneDay, getToday, isCustomPeriod,
+  setPeriodTitle
 } from './defaultFunctions.js'
 import {
-  updatePeriods, createDay, getRawDay, setDefaultPeriodTitle, disable, afterDayEnded,
+  updatePeriods, createDay, getRawDay, disable,
   getYesterdayRecap, checkBackupReminder
 } from './sharedFunctions.js'
 
@@ -98,13 +98,13 @@ async function createTask({
        : per.periodDay),
     history: td.history || [],
     special: td.periodId ? td.special : per.special,
-    nameEdited: td.periodId ? td.nameEdited : false,
+    //nameEdited: td.periodId ? td.nameEdited : false,
     disabled: td.disabled || false,
     deleted: false
   };
   if (!task.special) delete task.special;
-  if (td.name && task.name != td.name) task.nameEdited = true;
-  if (td.nameEdited) task.name = td.name;
+  //if (td.name && task.name != td.name) task.nameEdited = true;
+  //if (td.nameEdited) task.name = td.name;
   if (td.created) task.created = td.created;
   if (enableEndDate && endDate) task.endDate = endDate;
   if (task.special == 'untilComplete' && wishlist) task.wishlist = true;
