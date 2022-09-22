@@ -1,5 +1,5 @@
 import { qs, qsa } from '../utils/dom.js'
-import { renderToggler } from './highLevel/taskThings.js'
+import { renderTask } from './highLevel/taskThings.js'
 
 export const wishlist = {
   get header() { return `${emjs.star} Your wishlist`},
@@ -10,28 +10,48 @@ export const wishlist = {
   `},
   get footer() { return `
     <button id="back" class="secondary">${emjs.back} Back</button>
+    <button id="addWish">${emjs.star} Add new wish</button>
   `},
   script: async ({globals, page}) => {
     qs('#back').addEventListener('click', () => history.back());
+    qs('#addWish').addEventListener('click', async () => {
+      await globals.paintPage('taskCreator', {
+        params: { wishlist: 'true' }
+      });
+    });
     await paintWishlist(globals, page);
   },
 };
 
 async function paintWishlist(globals, page) {
+  const current = qs('#current');
+  const completed = qs('#completed');
   await globals.db.getAll('tasks', (td) => {
     if (!td.wishlist) return;
     if (td.deleted) return;
-    const base = { name: td.name, id: td.id };
     const text = 'Wish is completed';
-    if (td.disabled) return renderToggler({
-      ...base, page: qs('#completed'), buttons: [{
-        emoji: emjs.sign, title: text, aria: text, func: () => {}
-      }]
-    });
-    renderToggler({
-      ...base, page: qs('#current'),
+    const buttons = [{
+      emoji: emjs.sign, title: text, aria: text, func: () => {}
+    }];
+    renderTask(globals, td, td.disabled ? completed : current, {
+      openTask: true, completeTask: !td.disabled,
+      customButtons: td.disabled ? buttons : null
     });
   });
-  if (qs('#completed').innerHTML == '') return;
-  qsa('.hidedUI').forEach((item) => item.classList.remove('hidedUI'));
+  const hasActive = qs('#current').innerHTML !== '';
+  const hasCompleted = qs('#completed').innerHTML !== '';
+  if (!hasActive && !hasCompleted) {
+    page.classList.add('center', 'doubleColumns');
+    page.innerHTML = `
+      <h2 class="emoji">${emjs.empty}</h2>
+      <h2>You have no wishes stored here yet!</h2>
+    `;
+    return;
+  }
+  if (!hasActive) {
+    //
+  }
+  if (hasCompleted) {
+    qsa('.hidedUI').forEach((item) => item.classList.remove('hidedUI'));
+  }
 }
