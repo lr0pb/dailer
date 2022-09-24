@@ -1,0 +1,49 @@
+@import 'mixins.scss';
+
+h1, h2, h3, h4, p {
+  @include text();
+  word-break: break-all;
+  word-break: break-word;
+}
+.emojiSymbol {
+  height: 1.1em; width: 1.1em;
+  margin: 0.15em 0.1em;
+  vertical-align: -0.05em;
+  color: transparent;
+  display: inline-block;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+h1, h4 {
+  font-size: 6rem;
+}
+h2 {
+  font-size: 4.9rem;
+  margin: 1rem;
+  line-height: 1.2;
+}
+h3, #message {
+  font-size: 3.8rem;
+  margin: 1rem;
+  line-height: 1.17;
+  & > .emojiSymbol { vertical-align: 0.05rem; }
+}
+p {
+  font-size: 2.5rem;
+  line-height: 1.12;
+  margin: 0 1rem;
+}
+.emoji {
+  font-size: 9rem;
+}
+
+strong, a {
+  background-color: var(--darkShadow);
+  padding: 0.4rem 1.2rem;
+  border-radius: 1.5rem;
+  font-weight: bold;
+}
+.darkText { color: rgba(var(--textRGB), 0.25); }
+
+a, a:visited { color: var(--mainText); }

@@ -1,0 +1,30 @@
+@import 'ui/styles/media.scss';
+@import 'ui/styles/text.scss';
+@import 'ui/styles/inputs.scss';
+@import 'ui/styles/hoverables.scss';
+@import 'ui/styles/gradients.scss';
+
+@import 'ui/page.scss';
+@import 'ui/popupMessages.scss';
+@import 'ui/taskInfo.scss';
+
+@import 'ui/toggler.scss';
+@import 'ui/togglableElement.scss';
+
+.dataLine, .columnFlex {
+  display: flex;
+}
+.columnFlex {
+  flex-direction: column;
+}
+
+.pageBtn, .hidedUI, input[type="file"], .uploadUI, .uploadSuccess,
+.downloadUI, .downloadLink, .historyMonth > [data-used="false"], .completed, .forgotten,
+.notifNotAllowed {
+  display: none;
+}
+
+.dataLine {
+  min-width: var(--fullWidth);
+  align-items: baseline;
+}

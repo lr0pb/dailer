@@ -1,0 +1,99 @@
+@mixin flex {
+  display: flex;
+}
+@mixin rowFlex {
+  @include flex();
+  flex-direction: row;
+}
+@mixin columnFlex {
+  @include flex();
+  flex-direction: column;
+}
+@mixin alignFlex {
+  @include flex();
+  align-items: center;
+}
+@mixin justifyFlex {
+  @include flex();
+  justify-content: center;
+}
+@mixin centerFlex {
+  @include alignFlex();
+  @include justifyFlex();
+}
+@mixin wrapFlex {
+  @include flex();
+  flex-wrap: wrap;
+}
+
+@mixin text {
+  margin: 0;
+  font-family: Arial, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@mixin box {
+  box-sizing: border-box;
+  background-origin: border-box;
+}
+
+$smallRadius: 1.5;
+$bigRadius: 2.5;
+
+@mixin rounded($radius) {
+  border-radius: $radius * 1rem;
+  $borderWidth: 0.7rem;
+  @if ($radius == $bigRadius) {
+    $borderWidth: 0.9rem;
+  }
+  border: $borderWidth solid var(--darkBorder);
+  margin: 2.5rem 1.5rem;
+}
+
+@mixin fixedCenter {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0 !important;
+}
+
+@mixin elemShowing {
+  animation: elemShowing var(--normalAnim) forwards;
+}
+
+@keyframes elemShowing {
+  0% {opacity: 0;}
+  100% {opacity: 1;}
+}
+
+@mixin base($animated, $radius) {
+  @include box();
+  @include rounded($radius);
+  @if ($animated == 1) {
+    @include elemShowing();
+    opacity: 0;
+    animation-delay: 0.05s;
+  }
+}
+
+@mixin component($animated, $radius) {
+  @include base($animated, $radius);
+  border-color: transparent;
+  background-color: var(--taskBg);
+}
+
+@mixin fullComponent($animated) {
+  @include component($animated, $bigRadius);
+  width: var(--fullWidth);
+  margin: 0 0 2rem;
+}
+
+@mixin scrollSnap {
+  scroll-snap-align: start;
+}
+
+@mixin defaultPositioning {
+  min-width: var(--fullWidth);
+  margin: 1rem 0;
+}

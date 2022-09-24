@@ -1,9 +1,11 @@
-import { getGlobals, showPage, hidePage } from './logic/globals.js'
+import './app.scss'
+import { getGlobals } from './logic/globals.js'
 import { pages } from './logic/pages.js'
 import { IDB, database } from './logic/IDB.js'
+import { enableEmojis } from './logic/emojis.js'
+import { deployWorkers } from './logic/deployWorkers.js'
 import {
-  renderFirstPage, renderPage, onHistoryAPIBack, onAppNavigation,
-  onTraverseNavigation, externalNavigate
+  renderFirstPage, renderAppState, onHistoryAPIBack, onAppNavigation, onTraverseNavigation
 } from './logic/navigation.js'
 import { globQs as qs, inert, convertEmoji } from './utils/dom.js'
 import {
@@ -15,7 +17,7 @@ import {
 } from './logic/environment.js'
 import { processSettings, toggleExperiments } from './pages/highLevel/settingsBackend.js'
 import { checkInstall } from './pages/main.js'
-import { registerPeriodicSync, toggleNotifReason } from './pages/settings/notifications.js'
+import { toggleNotifReason } from './pages/settings/notifications.js'
 
 if (!('at' in Array.prototype)) {
   function at(n) {
@@ -74,7 +76,7 @@ async function appEntryPoint(e) {
     timeLog.deployWorkers = performance.now();
   }
   document.documentElement.lang = navigator.language;
-  const { worker, periodicSync } = await deployWorkers();
+  const { worker, periodicSync } = await deployWorkers(globals);
   globals.worker = worker;
   if (performance) {
     timeLog.deployWorkers = performance.now() - timeLog.deployWorkers;
@@ -85,7 +87,7 @@ async function appEntryPoint(e) {
     timeLog.processSettings = performance.now() - timeLog.processSettings;
     timeLog.loadEmoji = performance.now();
   }
-  await enableEmojis();
+  await enableEmojis(globals);
   if (performance) {
     timeLog.loadEmoji = performance.now() - timeLog.loadEmoji;
     timeLog.paintUnvisibles = performance.now();
@@ -99,7 +101,7 @@ async function appEntryPoint(e) {
     timeLog.paintUnvisibles = performance.now() - timeLog.paintUnvisibles;
     timeLog.startApp = performance.now();
   }
-  dailerData.nav ? await startApp() : await renderPage(e, false, globals);
+  dailerData.nav ? await startApp() : await renderAppState(e, false, globals);
   if (performance) {
     timeLog.startApp = performance.now() - timeLog.startApp;
     timeLog.wholeTime = performance.now() - timeLog.wholeTime;
@@ -116,124 +118,6 @@ window.addEventListener('pagehide', () => {
 
 function createDb() {
   if (!globals.db) globals.db = new IDB(database.name, database.version, database.stores);
-}
-
-async function unregisterPreviousSW() {
-  if (window.opener) window.opener.close();
-  const regs = await navigator.serviceWorker.getRegistrations();
-  for (let reg of regs) {
-    if (!reg.active.scriptURL.includes('/tools')) continue;
-    await reg.unregister();
-  }
-}
-
-async function deployWorkers() {
-  const resp = {
-    worker: null, periodicSync: { support: false }
-  };
-  if (!('serviceWorker' in navigator && 'caches' in window)) return resp;
-  await unregisterPreviousSW();
-  const reg = await navigator.serviceWorker.register('./sw.js');
-  navigator.serviceWorker.onmessage = async (e) => {
-    if (typeof e.data !== 'object') return;
-    await externalNavigate(globals, e.data.navigate);
-  };
-  if ('launchQueue' in window && 'targetURL' in LaunchParams.prototype) {
-    launchQueue.setConsumer(async (launchParams) => {
-      await externalNavigate(globals, launchParams.targetURL);
-    });
-  }
-  const worker = new Worker('./workers/mainWorker.js');
-  worker._callsList = new Map();
-  worker.call = setCallListener(worker);
-  worker.onmessage = (e) => {
-    if (e.data.error) return showErrorPage(globals, e.data.error);
-    worker._callsList.set(e.data._id, { data: e.data.data, used: false });
-  };
-  worker.postMessage({isWorkerReady: false});
-  resp.worker = worker;
-  if (!('permissions' in navigator)) return resp;
-  const isPeriodicSyncSupported = 'periodicSync' in reg;
-  resp.periodicSync.support = isPeriodicSyncSupported;
-  if (!isPeriodicSyncSupported) return resp;
-  resp.periodicSync.permission = await registerPeriodicSync(reg);
-  return resp;
-}
-
-function setCallListener(worker) {
-  return async (call = {}) => {
-    for (let [key, value] of worker._callsList) {
-      if (value.used) worker._callsList.delete(key);
-    }
-    if (typeof call !== 'object') return;
-    call._id = Date.now();
-    worker.postMessage(call);
-    await new Promise((res, rej) => {
-      const isReady = () => worker._callsList.has(call._id) ? res() : setTimeout(isReady, 10);
-      isReady();
-    });
-    const resp = worker._callsList.get(call._id);
-    resp.used = true;
-    return resp.data;
-  };
-}
-
-async function enableEmojis() {
-  const timeLog = performance ? {
-    json: performance.now(),
-    images: null,
-  } : {};
-  const resp = await fetch('./emoji.json');
-  window._emojiList = await resp.json();
-  if (performance) {
-    timeLog.json = performance.now() - timeLog.json;
-    timeLog.images = performance.now();
-  }
-  const isAppleEmoji = await setEmojiLoad();
-  if (performance) {
-    timeLog.images = performance.now() - timeLog.images;
-    console.log(timeLog);
-  }
-  window.emjs = new Proxy({}, {
-    get(target, prop) {
-      if (!(prop in _emojiList)) return '';
-      const html = `&#x${_emojiList[prop]};`;
-      if (isAppleEmoji) return html;
-      const style = `background-image: url(${getEmojiLink(prop)});`;
-      return `<span class="emojiSymbol" style="${style}">${html}</span>`;
-    }
-  });
-  window.hasEmoji = (elem) => typeof elem == 'string' ? elem.includes('emojiSymbol') : undefined;
-}
-
-function getEmojiLink(emoji) {
-  return `https://raw.githubusercontent.com/googlefonts/noto-emoji/main/svg/emoji_u${
-    _emojiList[emoji]
-  }.svg`;
-}
-
-async function setEmojiLoad() {
-  const isAppleEmoji = dailerData.isIOS || dailerData.isMacOS;
-  const session = await globals.db.getItem('settings', 'session');
-  const isDiffVersions = window._emojiList.lastModified !== session.emojiLastModified;
-  session.emojiLastModified = window._emojiList.lastModified;
-  await globals.db.setItem('settings', session);
-  if (!isAppleEmoji && isDiffVersions) {
-    qs('#loadingText').innerHTML = `Loading updated assets...`;
-    await loadEmojis();
-  }
-  delete window._emojiList.lastModified;
-  return isAppleEmoji;
-}
-
-async function loadEmojis() {
-  const loadArray = [];
-  for (let name in window._emojiList) {
-    if (name == 'lastModified') continue;
-    const link = getEmojiLink(name);
-    loadArray.push(fetch(link));
-  }
-  await Promise.all(loadArray);
 }
 
 async function startApp() {

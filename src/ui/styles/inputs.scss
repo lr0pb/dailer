@@ -1,0 +1,97 @@
+@import 'mixins.scss';
+
+button {
+  @include text();
+  @include base(0, $bigRadius);
+  $vertical: 1.5rem;
+  $horizontal: 3rem;
+  --bgColor: var(--accent);
+
+  min-height: 11.5rem;
+  font-size: 4.3em;
+  line-height: 1.3;
+  font-weight: 700;
+  padding: $vertical 4rem $vertical $horizontal;
+  color: white;
+  background-color: var(--bgColor) !important;
+
+  .content > & {
+    margin: $vertical 0;
+  }
+
+  .floatingMsg & {
+    margin-left: auto;
+    margin-right: $horizontal;
+  }
+
+  &.smallBtn {
+    min-height: 7.87rem;
+    font-size: 4em;
+    padding: 0 2rem 0 1.5rem;
+    margin: 0;
+    border-color: transparent;
+  }
+
+  &.noEmoji {
+    padding-right: $horizontal;
+  }
+
+  &.emojiBtn {
+    min-height: 0;
+    font-size: 5em;
+    line-height: 1.2;
+    --bgColor: transparent;
+    border-color: transparent;
+    margin: 0;
+    padding: 0 1rem;
+  }
+
+  &.secondary { --bgColor: var(--secondary); }
+  &.success { --bgColor: var(--accentGreen); }
+  &.danger { --bgColor: var(--accentRed); }
+  &.transparent {
+    color: var(--mainText);
+    --bgColor: var(--transparentBg);
+  }
+}
+
+button, [role="button"] {
+  outline: none !important;
+  transition:
+    background-color var(--fastAnim),
+    transform var(--normalAnim),
+    border-color var(--normalAnim);
+}
+
+button:disabled, [disabled]:not(input, select) {
+  filter: grayscale(1);
+  cursor: default;
+}
+
+input, select {
+  @include box();
+  @include defaultPositioning();
+
+  min-height: 8.5rem;
+  padding: 1.5rem 2rem;
+  background-color: white;
+  --border: var(--darkShadow);
+  border: 0.8rem solid var(--border);
+  border-radius: 1.5rem;
+  outline: none;
+  transition: border-color var(--fastAnim);
+
+  &:disabled {
+    background-color: var(--darkShadow);
+    color: var(--mainText);
+    opacity: 1;
+  }
+  &:-webkit-autofill, &:autofill { --border: #9fc0fb; }
+}
+
+progress {
+  @include defaultPositioning();
+  min-height: 4rem;
+  margin: 5rem 0;
+  cursor: progress;
+}

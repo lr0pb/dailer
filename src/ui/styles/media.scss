@@ -1,0 +1,127 @@
+:root {
+  --headerHeight: 15rem;
+  --footerHeight: 17rem;
+  --fullHeight: calc(100vh - var(--headerHeight) - var(--footerHeight));
+  --defaultFullWidth: 92.5vw;
+  --fullWidth: var(--defaultFullWidth);
+  --defaultGridContent: calc(100vw - 6rem);
+  --gridContent: var(--defaultGridContent);
+
+  --yellow: #cda61a;
+  --red: #e32727;
+  --green: #3ea317;
+  --blue: #1aa2cd;
+  --fastAnim: 0.15s;
+  --normalAnim: 0.3s;
+  --longAnim: 1.0s;
+  --msgShowing: 3s;
+  /* Color section */
+  --brand: 215deg;
+
+  --mainBg: hsl(var(--brand), 50%, 3%);
+  --transparentBg: rgba(0, 0, 0, 0.1);
+  --mainText: white;
+  --textRGB: 255, 255, 255;
+  --darkBorder: hsla(var(--brand), 12%, 16%, 0.5);
+  --darkShadow: hsl(var(--brand), 10%, 35%);
+  --accent: hsl(var(--brand), 60%, 51%);
+  --secondary: hsl(var(--brand), 15%, 35%);
+  --accentGreen: #379b00;
+  --accentRed: #cb3a3a;
+  --accentGreenRGB: 55, 155, 0;
+  --accentRedRGB: 203, 58, 58;
+  --lightBlueBg: hsl(var(--brand), 19%, 48%);
+  --taskBg: hsla(var(--brand), 10%, 17%, 0.5);
+  --gradientLight: #5a73f2;
+  --gradientDark: #0f0b30;
+  --infoRectBg: hsla(var(--brand), 40%, 13%, 0.4);
+  --lightBorder: rgba(227, 227, 227, 0.35);
+  --popupBg: #343434;
+  --marker: hsl(var(--brand), 100%, 75%);
+  --msgBg: var(--mainBg);
+  --focusBorder: #d1d1d1;
+  --focusBg: hsl(var(--brand), 10%, 18%);
+  accent-color: var(--accent);
+  --onboardBg1: #7FA1F71A;
+  --onboardBg2: #D0F0FD14;
+  --onboardOpacity: 0.5;
+}
+
+html { font-size: 1.25vmin; }
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --mainBg: hsl(var(--brand), 30%, 98%);
+    --transparentBg: rgba(255, 255, 255, 0.2);
+    --mainText: black;
+    --textRGB: 0, 0, 0;
+    --darkBorder: hsla(var(--brand), 60%, 90%, 0.5);
+    --darkShadow: hsl(var(--brand), 35%, 85%);
+    /*--accent: #699ade;*/
+    --secondary: hsl(var(--brand), 17%, 55%);
+    /*--accentGreen: #54c416;
+    --accentRed: #ef5353;*/
+    --lightBlueBg: hsl(var(--brand), 67%, 82%);
+    --taskBg: hsla(var(--brand), 52%, 91%, 0.5);
+    /*--gradientLight: #9aaafa;*/
+    --gradientDark: #463e8c;
+    --infoRectBg: hsla(var(--brand), 20%, 96%, 0.4);
+    --lightBorder: rgb(174, 174, 174, 0.35);
+    --popupBg: var(--mainBg);
+    /*--marker: hsl(var(--brand), 100%, 90%); this got switched between day & night*/
+    --msgBg: #232323;
+    --focusBorder: #626262;
+    --focusBg: hsl(var(--brand), 59%, 92%);
+    --onboardBg1: #7FA1F761;
+    --onboardBg2: #D0F0FD61;
+    --onboardOpacity: 0.65;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --fastAnim: 0;
+    --normalAnim: 0;
+    --longAnim: 4s;
+    --msgShowing: 0;
+  }
+  .hidePrevPage { opacity: 0; }
+}
+
+@media (orientation: portrait) {
+  .floatingMsg.notFixed { min-height: 17rem; }
+}
+/*
+@media (max-height: 675px) and (orientation: portrait) and (max-aspect-ratio: 12 / 16) {
+  :root {
+    --defaultFullWidth: 93.2vw;
+    --headerHeight: 13rem;
+    --footerHeight: 14rem;
+  }
+  html { font-size: 1.15vmin; }
+}
+*/
+@media (min-width: 470px) {
+  :root {
+    --fullWidth: 450px;
+    --gridContent: var(--fullWidth);
+  }
+  html { font-size: 0.65vmin; }
+}
+
+@media (min-width: 470px) and (orientation: portrait) {
+  :root { --fullWidth: 75vw; }
+}
+
+@media (min-width: 935px) and (orientation: landscape) {
+  :root { --gridContent: calc(var(--fullWidth) * 2 + 2rem); }
+  .doubleColumns:not(.center) {
+    display: flex; min-height: fit-content;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-content: baseline;
+  }
+  .doubleColumns { width: var(--gridContent); }
+  .floatingMsg.notFixed { min-height: 13rem; }
+}

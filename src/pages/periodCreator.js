@@ -122,7 +122,6 @@ async function onPeriodCreator({globals, page, params}) {
     });
     globals.db.setItem('periods', period);
     globals.message({ state: 'success', text: `Period ${isEdit ? 'edited' : 'created'}` });
-    await globals.checkPersist();
     await paintPeriods(globals);
     if (isEdit) {
       const titles = globQsa(`.customTitle[data-period="${period.id}"]`);
@@ -134,6 +133,7 @@ async function onPeriodCreator({globals, page, params}) {
       delete globals.pageInfo.periodPromo;
     }
     history.back();
+    await globals.checkPersist();
   });
 }
 

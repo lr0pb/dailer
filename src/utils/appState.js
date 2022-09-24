@@ -14,6 +14,19 @@ export function getParams(url) {
   return params;
 }
 
+export function getPageLink(name, params = {}, dontClearParams) {
+  const base = dontClearParams ? location.href : location.origin + location.pathname;
+  const getLink = (sign) => base + sign + `page=${name}`;
+  const matcher = base.match(/(?:page=)(\w+)/);
+  let link = base.includes('?')
+  ? (base.includes('page') ? base.replace(matcher[1], name) : getLink('&'))
+  : getLink('?');
+  link = link.replace(/\&settings=\w+/, '');
+  for (let prop in params) { link += `&${prop}=${params[prop]}`; }
+  const url = new URL(link);
+  return dailerData.nav ? url.pathname + url.search : link;
+}
+
 export function getFirstPage(session) {
   if (!session.firstDayEver) return 'main';
   if (session.firstDayEver == getToday()) return 'main';
@@ -62,17 +75,25 @@ export function syncGlobals(globals) {
 }
 
 export function updateState(updatedStateEntries) {
-  let state = dailerData.nav ? navigation.currentEntry.getState() : copyObject(history.state);
+  let state = dailerData.nav
+  ? navigation.currentEntry.getState() : copyObject(history.state);
   if (!state) state = {};
   for (let key in updatedStateEntries) {
     state[key] = updatedStateEntries[key];
   }
-  dailerData.nav ? navigation.updateCurrentEntry({ state }) : history.replaceState(state, '', location.href);
+  dailerData.nav
+  ? navigation.updateCurrentEntry({ state }) : history.replaceState(state, '', location.href);
 }
 
 export async function reloadApp(globals, page) {
   if (!dailerData.nav) {
-    await globals.paintPage(page || 'main', { noAnim: true });
+    globals.traverseBack = true;
+    const count = globals.historyCount + 1;
+    for (let i = 0; i < globals.historyCount; i++) {
+      history.back();
+    }
+    history.replaceState({}, '', getPageLink('reloaded'));
+    history.back();
     return location.reload();
   }
   await navigation.reload({ info: {call: 'hardReload', page} }).finished;

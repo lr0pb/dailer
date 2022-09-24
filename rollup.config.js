@@ -6,11 +6,11 @@ import { terser } from 'rollup-plugin-terser'
 import copy from 'rollup-plugin-copy'
 import serve from 'rollup-plugin-serve'
 import livereload from 'rollup-plugin-livereload'
-//import css from 'rollup-plugin-css-porter'
+import scss from 'rollup-plugin-scss'
 import fg from 'fast-glob'
 
 const isServe = process.env.SERVE;
-const isDev = process.env.DEV;
+const isDev = process.env.DEV ? true : false;
 
 const base = './src/**/*'
 
@@ -18,13 +18,21 @@ const mainPlugins = [
   cleaner('out'),
   copy({
     targets: [{
-      src: fg.sync([base, `!${base}.js`, `!${base}.json`]),
+      src: fg.sync([
+        base, `!${base}.js`, `!${base}.json`, `${(isDev ? '' : '!') + base}.scss`
+      ]),
       dest: './', rename: (...args) => renameCopiedFiles('src', 'out', ...args)
     }],
     flatten: true
   }),
   copyJSONs('src', 'out'),
   insertEnvVariables('out'),
+  scss({
+    output: './out/app.css',
+    outputStyle: isDev ? undefined : 'compressed',
+    sourceMap: isDev,
+    watch: isDev ? './src/' : undefined
+  }),
 ];
 const workerPlugins = [
   generateFilesList('out'),
@@ -38,7 +46,7 @@ if (isServe) {
 }
 if (isDev) {
   mainPlugins.push(livereload({
-    watch: './out', delay: 250
+    watch: './out', delay: 500
   }));
 } else {
   mainPlugins.push(terser());

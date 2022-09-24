@@ -1,0 +1,8 @@
+.togglableElement {
+  & > *:first-child {
+    transition: transform var(--normalAnim);
+  }
+  & > *:last-child {
+    transition: opacity var(--normalAnim);
+  }
+}

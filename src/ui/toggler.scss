@@ -1,0 +1,21 @@
+@import 'styles/mixins.scss';
+
+.task {
+  @include rowFlex();
+  @include fullComponent(1);
+
+  & > div {
+    margin: 0.2rem auto 1.2rem 1.0rem;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  & h2 { margin: 1.5rem auto 0 1rem; }
+  & > :last-child { margin-right: 0.5rem; }
+  .customBgContainer & {
+    --blur: 12px;
+    -webkit-backdrop-filter: blur(var(--blur));
+    backdrop-filter: blur(var(--blur));
+  }
+}

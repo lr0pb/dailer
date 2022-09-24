@@ -149,7 +149,7 @@ async function onPageShow({globals, page}) {
   const priorities = await globals.getList('priorities');
   const extendedInfo = { periods, priorities };
   const task = renderTask(globals, td, elem ? null : page, {
-    openTask: true, editTask: true, extendedInfo, deleteTask: true
+    openTask: true, extendedInfo, ...meta[globals.pageName].buttons(td)
   });
   if (elem && task) elem.replaceWith(task);
   delete globals.pageInfo.dataChangedTaskId;

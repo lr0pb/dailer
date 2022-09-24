@@ -1,6 +1,6 @@
 import { pages } from './pages.js'
 import { popups } from '../pages/popups.js'
-import { showPage, hidePage } from './globals.js'
+import { showPage, hidePage } from '../ui/page.js'
 import { globQs as qs, globQsa as qsa } from '../utils/dom.js'
 import { getToday } from '../pages/highLevel/periods.js'
 import { getFirstPage, getParams } from '../utils/appState.js'
@@ -39,7 +39,7 @@ async function processPageBuilding(globals, params) {
   }
 }
 
-export async function renderPage(e, back, globals) {
+export async function renderAppState(e, back, globals) {
   if (!back) return renderFirstPage(globals);
   const params = getParams();
   if (params.settings == 'open') {
@@ -55,6 +55,7 @@ export async function renderPage(e, back, globals) {
     await globals.closeSettings(back, false);
     return;
   }
+  globals.pageName = params.page;
   const session = await globals.db.getItem('settings', 'session');
   const rndr = (params.page && pages[params.page]) ? params.page : getFirstPage(session);
   globals.closePopup();
@@ -63,10 +64,12 @@ export async function renderPage(e, back, globals) {
 
 export async function onHistoryAPIBack(e, globals) {
   if (dailerData.nav) return;
+  if (globals.traverseBack) return;
+  globals.historyCount--;
   if (pages[globals.pageName].onBack) {
     pages[globals.pageName].onBack(globals);
   }
-  await renderPage(e, true, globals);
+  await renderAppState(e, true, globals);
   if (globals.additionalBack) {
     const backs = globals.additionalBack;
     globals.additionalBack = 0;
@@ -99,7 +102,7 @@ export function onAppNavigation(e, globals) {
   : e.transitionWhile(onTraverseNavigation(globals, e));
 }
 
-async function hardReload(globals, info) {
+async function hardReload(globals) {
   const appHistory = navigation.entries();
   let firstEntry = null;
   for (let i = 0; i < appHistory.length; i++) {

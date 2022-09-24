@@ -15,8 +15,13 @@ export function cleaner(dir) {
 
 // for rollup-plugin-copy
 export function renameCopiedFiles(srcDir, dir, name, ext, path) {
-  const folder = path.match(/[\w]+(?=\/[\w\d.-]+$)/)[0];
-  return `./${dir}${folder !== srcDir ? `/${folder}` : ''}/${name}.${ext}`;
+  const folders = path.match(/(?<=\/)[\w\d.-]+(?=\/)/g);
+  
+  return `./${dir}${ext == 'scss' ? `/${srcDir}${
+    name !== 'app' && folders[1] !== folders.at(-1) ? `/${folders[1]}` : ''
+  }`: ''}${
+    folders.at(-1) !== srcDir ? `/${folders.at(-1)}` : ''
+  }/${name}.${ext}`;
 }
 
 export function copyJSONs(srcDir, dir) {

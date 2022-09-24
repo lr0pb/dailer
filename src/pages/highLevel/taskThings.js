@@ -16,7 +16,7 @@ export function renderTask(globals, task, page, {
   let body = null;
   if (ei && typeof ei == 'object' && ei.periods && ei.priorities) {
     const priority = ei.priorities[task.priority];
-    const emoji = emjs[`${priority.emoji} ` || ''];
+    const emoji = priority.emoji ? emjs[priority.emoji] : '';
     body = `
       <h3>${task.name}</h3>
       <p>${isCustomPeriod(task.periodId)

@@ -1,0 +1,140 @@
+@import 'styles/mixins.scss';
+
+.doubleColumns {
+  & > *, .stretch > * {
+    width: var(--fullWidth);
+    margin-top: 0 !important;
+    margin-left: 0; margin-right: 0;
+  }
+  & .fullHeight { min-height: var(--fullHeight); }
+  & > .content {
+    min-width: var(--fullWidth);
+    max-width: var(--fullWidth);
+  }
+}
+
+.first {
+  margin-top: 2rem !important;
+  .stretch > & { margin-top: 1.5rem !important; }
+}
+
+body, .page, #settings, #popup, noscript {
+  @include text();
+  width: 100vw; height: 100vh;
+  height: stretch;
+  height: -webkit-fill-available;
+  height: 100dvh;
+  overflow: hidden;
+  background-color: var(--mainBg);
+  color: var(--mainText);
+}
+noscript, .error {
+  position: fixed;
+  z-index: 999;
+}
+.page, #settings {
+  position: fixed;
+  display: grid;
+  contain: content;
+  top: 0; left: 0;
+  grid-template-areas:
+    "... header ..."
+    "... content ..."
+    "footer footer footer"
+  ;
+  grid-template-rows: var(--headerHeight) 1fr var(--footerHeight);
+  grid-template-columns: minmax(3rem, 1fr) var(--gridContent) minmax(3rem, 1fr);
+}
+#settings {
+  z-index: 1;
+  --footerHeight: 0 !important;
+  transform: translateX(100vw);
+  transition: transform var(--normalAnim) cubic-bezier(.22,.61,.36,1);
+
+  & > .content > *:last-child:not(.doubleColumns) {
+    margin-bottom: 4rem;
+  }
+}
+
+.page {
+  transform: translateX(100vw);
+  transition: transform var(--normalAnim) cubic-bezier(.86,0,.07,1);
+  background-size: cover;
+
+  &.basic { transition-duration: calc(var(--normalAnim) * 2); }
+  &.showing { transform: translateX(0); }
+  &.hidePrevPage { transform: translateX(-35vw); }
+  &.basic {
+    &.hidePrevPage { transform: translateX(-100vw); }
+    & .emojiSymbol {
+      animation: rotation calc(var(--normalAnim) * 6) linear infinite;
+    }
+    &.hidePrevPage .emojiSymbol { animation-play-state: paused; }
+  }
+}
+
+@keyframes rotation {
+  100% { transform: rotateZ(1turn); }
+}
+
+.header {
+  @include alignFlex();
+  grid-area: header;
+
+  & > h1, & > h4 {
+    margin-right: auto;
+    line-height: 1.2;
+  }
+}
+
+.footer {
+  @include centerFlex();
+  grid-area: footer;
+  width: 100%;
+}
+
+.content {
+  @include columnFlex();
+  grid-area: content;
+  align-items: start;
+  overflow: hidden auto;
+  scroll-snap-type: y mandatory;
+
+  &:not(#popup) > &:not(.first):not(.circle) {
+    width: 100%; height: 100%;
+  }
+}
+
+.content, .hiddenScroll {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    width: 0; height: 0;
+  }
+}
+
+.center {
+  @include centerFlex();
+  $normMargin: 3rem;
+  $bigMargin: 6rem;
+  text-align: center;
+  
+  & > h2 { margin: $normMargin; }
+  & > *:not(.content) {
+    margin-left: $bigMargin !important;
+    margin-right: $bigMargin !important;
+  }
+  & > *:last-child:not(.content):not(.floatingMsg) {
+    margin-bottom: $normMargin !important;
+  }
+}
+
+.slider {
+  @include flex();
+  flex-direction: row;
+  scroll-snap-type: x mandatory;
+  
+  & > * { @include scrollSnap(); }
+  & > .content { min-width: 100%; }
+}
+
+.abs { position: absolute; }

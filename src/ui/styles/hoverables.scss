@@ -1,0 +1,59 @@
+@media (pointer: fine) and (hover: hover) {
+  button, input:not(:disabled), select:not(:disabled), [role="button"] {
+    cursor: pointer;
+  }
+
+  input {
+    &[type="text"]:not(:disabled) { cursor: text; }
+    &[type="range"]:not(:disabled) { cursor: grab; }
+    &[type="range"]:focus-visible {
+      outline: var(--accent) solid medium;
+      outline-offset: -0.7rem;
+    }
+    &:hover:not(:disabled), select:hover:not(:disabled) {
+      --border: var(--focusBorder);
+    }
+    &:-webkit-autofill:hover, &:autofill:hover {
+      --border: var(--mainText);
+    }
+    &:focus, select:focus {
+      --border: var(--accent);
+      outline: white solid thin;
+    }
+  }
+
+  button, [role="button"] {
+    &:focus-visible {
+      border-color: var(--mainText) !important;
+    }
+    &:active {
+      transform: scale(0.97);
+    }
+  }
+
+  button {
+    &:hover { filter: brightness(0.8); }
+    &.emojiBtn:active { transform: scale(0.93); }
+
+    @media (prefers-reduced-motion: no-preference) {
+      &:hover { transform: scale(0.97); }
+      &:active, &.emojiBtn:hover { transform: scale(0.93); }
+      &.emojiBtn:active { transform: scale(0.78); }
+      &:disabled:hover { transform: none; }
+    }
+  }
+
+  [role="button"] {
+    &:hover:not(:disabled), &:focus, &:not(:focus):focus-within {
+      background-color: var(--focusBg);
+    }
+  }
+}
+
+@media (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+  button {
+    &:active, [role="button"]:active {transform: scale(0.95); }
+    &.emojiBtn:active { transform: scale(0.89); }
+    &:disabled:active { transform: none; }
+  }
+}

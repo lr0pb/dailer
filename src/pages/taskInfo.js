@@ -70,8 +70,8 @@ async function renderTaskInfo({globals, page, params}) {
   }
   const iha = isHistoryAvailable(task);
   const isa = isStatsAvailable(task);
-  const base = (cl, style) => `
-    <div class="${cl}" ${style ? `style="${style}"` : ''}>
+  const base = (cl) => `
+    <div class="${cl}">
       <div id="infoBackground">
         <h4>${task.name}</h4>
       </div>
@@ -90,7 +90,7 @@ async function renderTaskInfo({globals, page, params}) {
       <div class="content abs circle"></div>
       <div class="content abs circle"></div>
     </div>
-    ${base('abs content', 'width: var(--fullWidth);')}
+    ${base('abs')}
   ` : page.innerHTML = `
     ${base('columnFlex')}
     <div class="fullHeight">${isa ? `

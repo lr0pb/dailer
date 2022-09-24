@@ -1,0 +1,112 @@
+@import 'styles/mixins.scss';
+
+#infoBackground, .infoRect {
+  @include scrollSnap();
+}
+
+#infoBackground, .itemsHolder {
+  @include wrapFlex();
+  width: var(--fullWidth);
+}
+
+#infoBackground {
+  @include base(0, $bigRadius);
+
+  min-height: 32rem;
+  flex-direction: column-reverse;
+  background-image: linear-gradient(135deg, var(--gradientLight) -10%, var(--gradientDark) 60%);
+  margin: 0;
+
+  & > h4 {
+    margin: 2rem 3rem;
+    color: white;
+  }
+}
+
+.itemsHolder {
+  @include defaultPositioning();
+}
+
+.infoRect {
+  @include base(1, $bigRadius);
+
+  width: calc(var(--fullWidth) * var(--coef) / 2 - 3rem);
+  min-height: 24rem;
+  background-color: var(--infoRectBg);
+  background-image: linear-gradient(150deg, var(--color) -40%, transparent 40%);
+  border-color: var(--darkBorder);
+  margin: 1.5rem;
+  
+  &.lined {
+    @include flex();
+    min-height: 12rem;
+    display: flex;
+    align-items: center;
+    & > h3 { margin-left: 0; }
+  }
+  & > * {
+    margin: 2rem 2.5rem;
+  }
+}
+
+#history, .historyMonth {
+  @include rowFlex();
+  width: var(--fullWidth);
+}
+
+#history {
+  @include elemShowing();
+  @include scrollSnap();
+  align-content: baseline;
+  overflow: auto hidden;
+  scroll-snap-type: x mandatory;
+
+  & > * {
+    @include scrollSnap();
+    scroll-snap-stop: always;
+    & > h3 { text-align: center; }
+  }
+}
+
+.historyMonth {
+  @include wrapFlex();
+  
+  & > * {
+    @include base(0, 2);
+    width: calc(var(--fullWidth) / 7);
+    text-align: center;
+    margin: 0.5rem 0;
+    padding: 0.5rem 0;
+    border-color: transparent;
+  }
+  & > h4 {
+    height: 1.77em;
+    font-weight: 400;
+  }
+  & > h4, .historyDay, .monthContainer {
+    @include centerFlex();
+  }
+}
+
+.monthContainer {
+  @include centerFlex();
+  height: calc(100% - 7rem);
+}
+
+.today {
+  background-color: var(--marker);
+  color: var(--mainText);
+}
+
+.selectedDay {
+  border-color: var(--accent);
+  & > .historyDay {
+    --color: transparent !important;
+  }
+}
+
+.historyDay {
+  background-color: rgba(var(--color), 0.25);
+  width: 90%; height: 100%;
+  border-radius: 1.5rem;
+}
