@@ -1,6 +1,6 @@
 import { handleKeyboard, convertEmoji } from '../utils/dom';
 /**
- * renderToggler
+ * Create rich toggler component
  * @param {TogglerOptions} togglerOptions Options for create toggler element
  * 
  * @typedef {Object} TogglerOptions
@@ -54,7 +54,12 @@ export function renderToggler({
     await onClick(e, elem, buttons, onBodyClick, args);
   });
   if (value !== undefined) elem.dataset.value = value;
-  elem.activate = () => elem.querySelector('button').click();
+  elem.activate = () => elem.querySelector('button:last-child').click();
+  elem.setValue = (value) => {
+    if (!elem.dataset.value) return;
+    if (Number(elem.dataset.value) == value) return;
+    elem.activate();
+  };
   if (page) page.append(elem);
   return elem;
 }
@@ -93,5 +98,6 @@ export function toggleFunc({e, elem}) {
   elem.dataset.value = value;
   const target = e.target.dataset.action ? e.target : e.target.parentElement;
   target.innerHTML = emjs[value ? 'sign' : 'blank'];
+  if (elem.onValueChanged) elem.onValueChanged();
   return value;
 }

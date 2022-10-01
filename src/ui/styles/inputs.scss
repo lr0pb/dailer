@@ -58,9 +58,10 @@ button {
 button, [role="button"] {
   outline: none !important;
   transition:
-    background-color var(--fastAnim),
     transform var(--normalAnim),
-    border-color var(--normalAnim);
+    background-color var(--fastAnim),
+    border-color var(--normalAnim),
+    filter var(--fastAnim);
 }
 
 button:disabled, [disabled]:not(input, select) {
@@ -69,15 +70,14 @@ button:disabled, [disabled]:not(input, select) {
 }
 
 input, select {
-  @include box();
+  @include base(1, $bigRadius);
   @include defaultPositioning();
 
   min-height: 8.5rem;
   padding: 1.5rem 2rem;
   background-color: white;
   --border: var(--darkShadow);
-  border: 0.8rem solid var(--border);
-  border-radius: 1.5rem;
+  border-color: var(--border);
   outline: none;
   transition: border-color var(--fastAnim);
 

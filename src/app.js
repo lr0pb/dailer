@@ -117,7 +117,11 @@ window.addEventListener('pagehide', () => {
 });
 
 function createDb() {
-  if (!globals.db) globals.db = new IDB(database.name, database.version, database.stores);
+  if (!globals.db) globals.db = new IDB(
+    database.name, database.version, database.stores, {
+      showErrorsAsLogs: true
+    }
+  );
 }
 
 async function startApp() {
@@ -133,7 +137,7 @@ async function startApp() {
 }
 
 async function restoreApp(appHistory) {
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   for (let entry of appHistory) {
     dailerData.forcedStateEntry = entry;
     const params = getParams(entry.url);
@@ -195,7 +199,7 @@ window.addEventListener('beforeinstallprompt', async (e) => {
   e.preventDefault();
   if (dailerData.isDev) return;
   globals.installPrompt = e;
-  const session = await globals.db.updateItem('settings', 'session', (session) => {
+  const session = await globals.db.update('settings', 'session', (session) => {
     session.installed = false;
   });
   if (qs('#settings .content').innerHTML !== '') {

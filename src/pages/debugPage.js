@@ -33,9 +33,9 @@ async function renderPage({globals, page}) {
   const memory = navigator.storage && navigator.storage.estimate
   ? await navigator.storage.estimate() : { quota: 0, usage: 0 };
   if (!memory.usageDetails) memory.usageDetails = { caches: 0, indexedDB: 0 };
-  const days = await globals.db.hasItem('days');
-  const tasks = await globals.db.hasItem('tasks');
-  const periods = await globals.db.hasItem('periods');
+  const days = await globals.db.has('days');
+  const tasks = await globals.db.has('tasks');
+  const periods = await globals.db.has('periods');
   const data = {
     'Is storage persisted': isPersisted.toString(),
     'Notification permission': 'Notification' in window
@@ -69,8 +69,8 @@ async function renderPage({globals, page}) {
   });*/
   qs('#clearSettings').addEventListener('click', async () => {
     //await globals.db.deleteAll('settings');
-    await globals.db.deleteItem('settings', 'notifications');
-    await globals.db.updateItem('settings', 'session', (session) => {
+    await globals.db.delete('settings', 'notifications');
+    await globals.db.update('settings', 'session', (session) => {
       session.onboarded = false;
     });
     await reloadApp(globals, 'onboarding');
@@ -89,10 +89,10 @@ export async function clearDatabase(globals) {
     if (store == 'settings') continue;
     globals.db.deleteAll(store);
   }
-  await globals.db.updateItem('settings', 'session', (session) => {
+  await globals.db.update('settings', 'session', (session) => {
     session.updateTasksList = [];
   });
-  await globals.db.updateItem('settings', 'periods', (periodData) => {
+  await globals.db.update('settings', 'periods', (periodData) => {
     periodData.list = periodData.defaultList;
     periodData.lastId = periodData.defaultLastId;
   });

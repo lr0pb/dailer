@@ -139,7 +139,7 @@ async function onPageShow({globals, page}) {
   }
   id = globals.pageInfo.dataChangedTaskId;
   if (!id) return;
-  const td = await globals.db.getItem('tasks', id);
+  const td = await globals.db.get('tasks', id);
   const elem = qs(`[data-id="${id}"]`);
   if (!elem && page.classList.contains('center')) {
     page.innerHTML = '';

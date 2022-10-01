@@ -10,13 +10,16 @@
       outline: var(--accent) solid medium;
       outline-offset: -0.7rem;
     }
-    &:hover:not(:disabled), select:hover:not(:disabled) {
-      --border: var(--focusBorder);
-    }
     &:-webkit-autofill:hover, &:autofill:hover {
       --border: var(--mainText);
     }
-    &:focus, select:focus {
+  }
+  
+  input, select {
+    &:not(:disabled):hover {
+      --border: var(--focusBorder);
+    }
+    &:focus {
       --border: var(--accent);
       outline: white solid thin;
     }
@@ -32,7 +35,7 @@
   }
 
   button {
-    &:hover { filter: brightness(0.8); }
+    &:not(:disabled):hover { filter: brightness(0.8); }
     &.emojiBtn:active { transform: scale(0.93); }
 
     @media (prefers-reduced-motion: no-preference) {
@@ -44,9 +47,23 @@
   }
 
   [role="button"] {
-    &:hover:not(:disabled), &:focus, &:not(:focus):focus-within {
+    &:not(:disabled):hover, &:focus, &:not(:focus):focus-within {
       background-color: var(--focusBg);
     }
+    &:not(:disabled) &:not(:disabled):hover {
+      background-color: var(--overlayFocusBg);
+    }
+    &.scaleOnHover {
+      @media (prefers-reduced-motion: no-preference) {
+        &:hover {
+          transform: scale(0.97);
+        }
+      }
+    }
+  }
+
+  .overlayHover:not(:disabled):hover {
+    background-color: var(--overlayFocusBg);
   }
 }
 

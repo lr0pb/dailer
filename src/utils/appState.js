@@ -44,7 +44,7 @@ export async function installApp(globals) {
 }
 
 export async function onAppInstalled(globals) {
-  await globals.db.updateItem('settings', 'session', (session) => {
+  await globals.db.update('settings', 'session', (session) => {
     session.installed = true;
   });
   const elem = globQs('.floatingMsg[data-id="install"]');
@@ -53,17 +53,28 @@ export async function onAppInstalled(globals) {
   globQs('#install').dataset.installed = 'true';
 }
 
-export function safeDataInteractions(elems) {
+export function safeDataInteractions(inputs, customComponents = []) {
   const state = dailerData.nav ? navigation.currentEntry.getState() : history.state || {};
-  for (let elem of elems) {
-    if (state[elem]) qs(`#${elem}`).value = state[elem];
-    qs(`#${elem}`).addEventListener('input', stateSave);
+  for (const id of inputs) {
+    const elem = qs(`#${id}`);
+    if (!elem) continue;
+    if (state[id]) elem.value = state[id];
+    elem.addEventListener('input', (e) => stateSave(e.target));
+  }
+  for (const id of customComponents) {
+    const elem = qs(`[data-id="${id}"]`);
+    if (!elem) continue;
+    if (!(state[id] === undefined || state[id] === null)) {
+      elem.setValue(state[id]);
+    }
+    elem.onValueChanged = () => stateSave(elem, true);
   }
 }
 
-function stateSave(e) {
+function stateSave(elem, isData) {
   const state = {};
-  state[e.target.id] = e.target.value;
+  state[isData ? elem.dataset.id : elem.id] = isData
+  ? Number(elem.dataset.value) : elem.value;
   updateState(state);
 }
 
@@ -97,7 +108,7 @@ export async function reloadApp(globals, page) {
     return location.reload();
   }
   await navigation.reload({ info: {call: 'hardReload', page} }).finished;
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   await globals.paintPage(page || getFirstPage(session), { replaceState: true });
   await globals.paintPage('reloaded', { noAnim: true });
   history.back();

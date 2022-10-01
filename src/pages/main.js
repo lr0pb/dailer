@@ -35,8 +35,8 @@ export const main = {
 };
 
 async function updatePage({globals, page}) {
-  const day = await globals.db.getItem('days', getToday().toString());
-  const session = await globals.db.getItem('settings', 'session');
+  const day = await globals.db.get('days', getToday().toString());
+  const session = await globals.db.get('settings', 'session');
   if (
     !day || day.lastTasksChange != session.lastTasksChange ||
     (globals.pageInfo && globals.pageInfo.backupUploaded)
@@ -63,13 +63,17 @@ async function renderDay({globals, page}) {
   for (let i = day.tasks.length - 1; i > -1; i--) {
     const tasks = day.tasks[i];
     for (let id in tasks) {
-      const td = await globals.db.getItem('tasks', id);
+      const td = await globals.db.get('tasks', id);
       renderTask(globals, td, page, {
         completeTask: true, openTask: true
       });
     }
   }
-  if (!dailerData.isDoubleColumns) addTaskButton(globals, page, 'task', 'transparent');
+  if (dailerData.isDoubleColumns) {
+    addTaskButton(globals, qs('.footer'), 'task');
+  } else {
+    addTaskButton(globals, page, 'task', 'transparent');
+  }
   await processChecks(globals);
 }
 
@@ -115,7 +119,7 @@ export async function checkInstall(globals) {
   if (dailerData.isIOS || dailerData.isMacOS) return;
   if (!globals.installPrompt) return;
   const persist = await globals.checkPersist();
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   if (persist === false || !session.installed) {
     globals.floatingMsg({
       id: 'install',
@@ -164,7 +168,7 @@ async function checkReminderPromo(globals) {
     onClick: async (e) => {
       await globals.openSettings('manageData');
       e.target.parentElement.remove();
-      await globals.db.updateItem('settings', 'backupReminder', (data) => {
+      await globals.db.update('settings', 'backupReminder', (data) => {
         data.knowAboutFeature = true;
       });
     }

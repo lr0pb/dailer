@@ -76,9 +76,9 @@ async function openTaskInfo({elem, globals}) {
 async function onTaskCompleteClick({
   e, elem, globals, customDay, completeCallback
 }) {
-  const td = await globals.db.getItem('tasks', elem.dataset.id);
+  const td = await globals.db.get('tasks', elem.dataset.id);
   const date = customDay ? customDay : getToday().toString();
-  const day = await globals.db.getItem('days', date);
+  const day = await globals.db.get('days', date);
   if (!day) return globals.floatingMsg({
     text: `${emjs.alarmClock} Day is expired! So you need to reload tasks for today`,
     onClick: async () => await reloadApp(globals),
@@ -90,8 +90,8 @@ async function onTaskCompleteClick({
   td.history.push(value);
   day.tasks[td.priority][td.id] = value;
   day.afterDayEndedProccessed = false;
-  await globals.db.setItem('tasks', td);
-  await globals.db.setItem('days', day);
+  await globals.db.set('tasks', td);
+  await globals.db.set('days', day);
   if (completeCallback) await completeCallback(day, value);
 }
 
@@ -107,16 +107,16 @@ export function showNoTasks(page) {
 }
 
 export async function editTask({globals, id, field, onConfirm}) {
-  const td = await globals.db.getItem('tasks', id);
+  const td = await globals.db.get('tasks', id);
   globals.openPopup({
     text: `Do you really want to ${field.replace(/\w$/, '')} this task?`,
     emoji: emjs[field == 'deleted' ? 'trashCan' : 'disabled'],
     action: async () => {
       td[field] = true;
       if (!td.endDate || !td.special) td.endDate = getToday() + oneDay;
-      await globals.db.setItem('tasks', td);
+      await globals.db.set('tasks', td);
       await globals.worker.call({ process: 'disable', args: td.id });
-      await globals.db.updateItem('settings', 'session', (session) => {
+      await globals.db.update('settings', 'session', (session) => {
         session.lastTasksChange = Date.now();
       });
       globals.message({ state: 'success', text: `Task ${field}` });

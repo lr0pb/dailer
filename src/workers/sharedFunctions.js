@@ -1,7 +1,7 @@
 import {
   env, database, IDB,
   getRawDate, isUnder3AM, oneDay, normalizeDate, getToday, isCustomPeriod,
-  intlDate, getTextDate, setPeriodTitle
+  intlDate, getTextDate, setPeriodTitle, getHistory
 } from './defaultFunctions.js'
 
 export async function updatePeriods() {
@@ -11,20 +11,19 @@ export async function updatePeriods() {
 
 export async function createDay(today = getToday()) {
   if (!env.periods) await updatePeriods();
-  if (!env.session) env.session = await env.db.getItem('settings', 'session');
+  if (!env.session) env.session = await env.db.get('settings', 'session');
   if (!env.session.firstDayEver) env.session.firstDayEver = today;
   const check = await checkLastDay(today);
   let tasks = null;
-  let previousDay = null;
   if (!check.check) {
     const resp = await createDay(check.dayBefore);
     tasks = resp.tasks;
     await afterDayEnded(resp.day);
   }
-  let day = await env.db.getItem('days', today.toString());
+  let day = await env.db.get('days', today.toString());
   if (!day) {
     const updateList = env.session.updateTasksList.map((taskId) => new Promise((res) => {
-      env.db.updateItem('tasks', taskId, setPeriodTitle).then(res);
+      env.db.update('tasks', taskId, setPeriodTitle).then(res);
     }));
     await Promise.all(updateList);
     env.session.updateTasksList = [];
@@ -54,13 +53,12 @@ export async function createDay(today = getToday()) {
         addTask(task, 0);
         if (task.special && task.special == 'untilComplete') day.cleared = false;
       }
-      await env.db.setItem('tasks', task);
+      await env.db.set('tasks', task);
     } else if (task.period[task.periodDay]) {
       addTask(task, task.history.at(-1));
     }
   }
-  await env.db.setItem('days', day);
-  await env.db.setItem('settings', env.session);
+  await env.db.set('days', [day, env.session]);
   return day.tasksAmount === 0 ? { day: 'error', tasks } : { day, tasks };
 }
 
@@ -77,7 +75,7 @@ async function checkLastDay(day) {
   const dayBefore = day - oneDay;
   const check = env.session.firstDayEver == day
   ? true
-  : await env.db.getItem('days', dayBefore.toString());
+  : await env.db.get('days', dayBefore.toString());
   return { check, dayBefore };
 }
 
@@ -155,7 +153,7 @@ export async function afterDayEnded(day) {
     if (value === 1) completedTasks++;
     else pushToForgotten = true;
     if (!day.cleared) {
-      const task = await env.db.getItem('tasks', id);
+      const task = await env.db.get('tasks', id);
       if (task.special && task.special == 'untilComplete' && value === 0) {
         tasksToDelete.push({ priority, id });
         pushToForgotten = false;
@@ -171,18 +169,18 @@ export async function afterDayEnded(day) {
   day.tasksAmount = tasksAmount;
   day.completedTasks = completedTasks;
   day.afterDayEndedProccessed = true;
-  await env.db.setItem('days', day);
+  await env.db.set('days', day);
   return forgottenTasks;
 }
 
 export async function getYesterdayRecap() {
-  const session = await env.db.getItem('settings', 'session');
+  const session = await env.db.get('settings', 'session');
   if (session.recaped == getToday()) return {
     response: { recaped: true }
   };
   const noShowResp = { response: { show: false } };
   const date = getToday() - oneDay;
-  let day = await env.db.getItem('days', String(date));
+  let day = await env.db.get('days', String(date));
   if (!day) {
     const resp = await createDay(date);
     if (resp.day == 'error') return noShowResp;
@@ -195,7 +193,7 @@ export async function getYesterdayRecap() {
     forgottenTasks = await afterDayEnded(day);
     if (!forgottenTasks) return noShowResp;
     day.forgottenTasks = forgottenTasks;
-    await env.db.setItem('days', day);
+    await env.db.set('days', day);
   }
   if (day.tasksAmount === 0) return noShowResp;
   const response = {
@@ -204,13 +202,23 @@ export async function getYesterdayRecap() {
   if (day.completedTasks == day.tasksAmount) {
     day.completed = true;
     response.completed = true;
-    await env.db.setItem('days', day);
+    await env.db.set('days', day);
   }
   return { response, day };
 }
 
+async function migrateHistory() {
+  const tasks = await env.db.getAll('tasks');
+  await Promise.all(
+    tasks.map((task) => new Promise(async (res) => {
+      migrateTask(task).then(res);
+    }))
+  );
+  self.postMessage({ event: 'historyMigration', data: 1 });
+}
+
 export async function checkBackupReminder() {
-  const remind = await env.db.getItem('settings', 'backupReminder');
+  const remind = await env.db.get('settings', 'backupReminder');
   const resp = { show: false };
   if (!remind.value) return resp;
   if (remind.nextRemind === getToday() && remind.isDownloaded) return resp;
@@ -219,7 +227,7 @@ export async function checkBackupReminder() {
   }
   remind.isDownloaded = false;
   if (remind.nextRemind === getToday()) resp.show = true;
-  await env.db.setItem('settings', remind);
+  await env.db.set('settings', remind);
   if (remind.lastTimeDownloaded + oneDay * remind.daysToShowPopup <= getToday()) {
     resp.popup = true;
   }

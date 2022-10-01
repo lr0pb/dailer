@@ -1,5 +1,5 @@
 import { renderToggler, toggleFunc } from '../ui/toggler.js'
-import { togglableElement } from '../ui/togglableElement.js'
+import { makeExpandable } from '../ui/expandableElement.js'
 import {
   qs, qsa, globQs, globQsa, handleKeyboard, copyArray, hide, getValue
 } from '../utils/dom.js'
@@ -32,11 +32,11 @@ export const periodCreator = {
       <div>
         <div class="historyMonth" focusgroup="horizontal"></div>
       </div>
-      <div class="togglerContainer first"></div>
+      <div class="togglerContainer"></div>
       <h3 class="excludeInEdit">When period is over, it will repeat again</h3>
-      <div class="togglerContainer first"></div>
+      <div class="togglerContainer"></div>
       <h3 class="excludeInEdit">Period days will be linked to the week days<!--, no matter when you start task with this period--></h3>
-      <div class="togglerContainer first"></div>
+      <div class="togglerContainer"></div>
       <h3>This period will be selected by default when you creating new tasks</h3>
     </div>
     <div></div>
@@ -66,7 +66,7 @@ async function onPeriodCreator({globals, page, params}) {
   let isEdit = params.id || globals.pageInfo.periodAction == 'edit';
   let per;
   if (isEdit) {
-    per = await globals.db.getItem('periods', globals.pageInfo.periodId);
+    per = await globals.db.get('periods', globals.pageInfo.periodId);
     if (!per) isEdit = false;
   }
   if (isEdit) {
@@ -91,7 +91,7 @@ async function onPeriodCreator({globals, page, params}) {
     name: 'Period will be looped', id: 'isRepeatable',
     toggler: isEdit ? emjs[per.special == 'oneTime' ? 'blank' : 'sign'] : emjs.sign,
     page: containers[0], value: isEdit ? (per.special == 'oneTime' ? 0 : 1) : 1,
-    disabled: isEdit
+    disabled: isEdit, first: true
   });
   renderToggler({
     name: 'Week linked period', id: 'getWeekStart',
@@ -107,20 +107,23 @@ async function onPeriodCreator({globals, page, params}) {
         } else daysCount.removeAttribute('disabled');
         toggleDays(value);
       }
-    }], disabled: isEdit
+    }], disabled: isEdit, first: true
   });
   renderToggler({
     name: 'Default period', id: 'selected',
     toggler: isEdit ? emjs[per.selected ? 'sign' : 'blank'] : emjs.blank,
-    page: containers[2], value: isEdit ? (per.selected ? 1 : 0) : 0
+    page: containers[2], value: isEdit ? (per.selected ? 1 : 0) : 0, first: true
   });
-  safeDataInteractions(['periodName', 'periodDesc', /*'daysCount'*/]);
+  safeDataInteractions(
+    ['periodName', 'periodDesc', /*'daysCount'*/],
+    ['isRepeatable', 'getWeekStart', 'selected']
+  );
   qs('#savePeriod').addEventListener('click', async () => {
     const period = await createPeriod(globals, per, isEdit);
     if (period == 'error') return globals.message({
       state: 'fail', text: 'Fill all fields'
     });
-    globals.db.setItem('periods', period);
+    globals.db.set('periods', period);
     globals.message({ state: 'success', text: `Period ${isEdit ? 'edited' : 'created'}` });
     await paintPeriods(globals);
     if (isEdit) {
@@ -150,6 +153,7 @@ function appendDays(originalDays, getWeekStart) {
     const elem = document.createElement('div');
     elem.dataset.used = 'true';
     elem.dataset.value = days ? days[i] : '0';
+    elem.className = 'scaleOnHover';
     if (days) elem.setAttribute('disabled', '');
     if (!days) {
       elem.setAttribute('role', 'button');
@@ -158,7 +162,7 @@ function appendDays(originalDays, getWeekStart) {
     elem.innerHTML += `
       <h4>${days ? emjs[days[i] ? 'sign' : 'blank'] : emjs.blank}</h4><h3>${dayNames[i]}</h3>
     `;
-    togglableElement(elem, 'hided');
+    makeExpandable(elem, 'hided');
     hm.append(elem);
   }
   if (days) return;
@@ -185,7 +189,7 @@ function onDaysCountChange(e) {
 
 export async function createPeriod(globals, per = {}, isEdit) {
   let periodData;
-  if (!isEdit) periodData = await globals.db.getItem('settings', 'periods');
+  if (!isEdit) periodData = await globals.db.get('settings', 'periods');
   const period = {
     id: isEdit ? per.id : String(periodData.lastId + 1),
     title: qs('#periodName') ? qs('#periodName').value : per.title,
@@ -218,7 +222,7 @@ export async function createPeriod(globals, per = {}, isEdit) {
   if (period.title == '' || !period.days.includes(1)) return 'error'
   if (!isEdit) {
     periodData.lastId++;
-    await globals.db.setItem('settings', periodData);
+    await globals.db.set('settings', periodData);
   }
   return period;
 }

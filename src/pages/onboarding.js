@@ -47,7 +47,7 @@ export const onboarding = {
     };
     if (!dailerData.isSafari) qsa('.safari').forEach((el) => el.remove());
     action.addEventListener('click', async () => {
-      const session = await globals.db.getItem('settings', 'session');
+      const session = await globals.db.get('settings', 'session');
       if (!session.installed && dailerData.isSafari) {
         if (action.dataset.stage == '0') {
           action.classList.add('secondary');
@@ -78,7 +78,7 @@ export const onboarding = {
 };
 
 async function onboard(globals) {
-  await globals.db.updateItem('settings', 'session', (session) => {
+  await globals.db.update('settings', 'session', (session) => {
     session.onboarded = true;
   });
   await globals.paintPage('taskCreator', { dontPushHistory: true });

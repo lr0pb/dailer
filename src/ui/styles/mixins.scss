@@ -31,6 +31,9 @@
   font-family: Arial, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   -webkit-user-select: none;
   user-select: none;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @mixin box {
@@ -40,12 +43,13 @@
 
 $smallRadius: 1.5;
 $bigRadius: 2.5;
+$largeRadius: 3.5;
 
 @mixin rounded($radius) {
   border-radius: $radius * 1rem;
-  $borderWidth: 0.7rem;
-  @if ($radius == $bigRadius) {
-    $borderWidth: 0.9rem;
+  $borderWidth: 0.9rem;
+  @if ($radius == $smallRadius) {
+    $borderWidth: 0.7rem;
   }
   border: $borderWidth solid var(--darkBorder);
   margin: 2.5rem 1.5rem;

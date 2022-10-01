@@ -11,7 +11,7 @@ export async function downloadData(globals) {
   link.download = `${name}.dailer`;
   link.href = URL.createObjectURL(blob);
   hide(prog);
-  await globals.db.updateItem('settings', 'backupReminder', (remind) => {
+  await globals.db.update('settings', 'backupReminder', (remind) => {
     if (remind.nextRemind === getToday() && !remind.isDownloaded) {
       remind.isDownloaded = true;
       remind.lastTimeDownloaded = getToday();

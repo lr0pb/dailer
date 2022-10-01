@@ -32,6 +32,7 @@
   --accentRedRGB: 203, 58, 58;
   --lightBlueBg: hsl(var(--brand), 19%, 48%);
   --taskBg: hsla(var(--brand), 10%, 17%, 0.5);
+  --overlayBg: hsl(var(--brand), 14%, 15%);
   --gradientLight: #5a73f2;
   --gradientDark: #0f0b30;
   --infoRectBg: hsla(var(--brand), 40%, 13%, 0.4);
@@ -41,6 +42,7 @@
   --msgBg: var(--mainBg);
   --focusBorder: #d1d1d1;
   --focusBg: hsl(var(--brand), 10%, 18%);
+  --overlayFocusBg: hsl(var(--brand), 10%, 26%);
   accent-color: var(--accent);
   --onboardBg1: #7FA1F71A;
   --onboardBg2: #D0F0FD14;
@@ -63,6 +65,7 @@ html { font-size: 1.25vmin; }
     --accentRed: #ef5353;*/
     --lightBlueBg: hsl(var(--brand), 67%, 82%);
     --taskBg: hsla(var(--brand), 52%, 91%, 0.5);
+    --overlayBg: hsl(var(--brand), 57%, 98%);
     /*--gradientLight: #9aaafa;*/
     --gradientDark: #463e8c;
     --infoRectBg: hsla(var(--brand), 20%, 96%, 0.4);
@@ -72,6 +75,7 @@ html { font-size: 1.25vmin; }
     --msgBg: #232323;
     --focusBorder: #626262;
     --focusBg: hsl(var(--brand), 59%, 92%);
+    --overlayFocusBg: hsl(var(--brand), 59%, 87%);
     --onboardBg1: #7FA1F761;
     --onboardBg2: #D0F0FD61;
     --onboardOpacity: 0.65;

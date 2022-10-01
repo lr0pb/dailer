@@ -1,12 +1,12 @@
 import { globQs as qs, createOptionsList } from '../../utils/dom.js'
 import { getToday, oneDay, getTextDate } from '../highLevel/periods.js'
 import { renderToggler, toggleFunc } from '../../ui/toggler.js'
-import { togglableElement } from '../../ui/togglableElement.js'
+import { makeExpandable } from '../../ui/expandableElement.js'
 
 export async function addBackupReminder(globals) {
-  const remind = await globals.db.getItem('settings', 'backupReminder');
+  const remind = await globals.db.get('settings', 'backupReminder');
   const value = remind.value ? 1 : 0;
-  togglableElement(qs('#reminderInfo'), value ? 'showing' : 'hided');
+  makeExpandable(qs('#reminderInfo'), value ? 'showing' : 'hided');
   renderToggler({
     name: `${emjs.alarmClock} Remind me`, id: 'reminder', buttons: [{
       emoji: emjs[value ? 'sign' : 'blank'],
@@ -24,7 +24,7 @@ export async function addBackupReminder(globals) {
 export async function paintBackupReminder(globals) {
   const reminderList = await globals.getList('reminderList');
   createOptionsList(qs('#reminderList'), reminderList);
-  const remind = await globals.db.getItem('settings', 'backupReminder');
+  const remind = await globals.db.get('settings', 'backupReminder');
   if (remind.id) qs('#reminderList').value = remind.id;
   if (!remind.value) return;
   qs('#nextRemind').innerHTML = getNextRemindText(remind.nextRemind);
@@ -40,7 +40,7 @@ async function onReminderClick({e, elem, globals}) {
       globals.message({ state: 'fail', text: 'Select how often to remind you first' });
     } else await onRemindIdChange(globals, remindId);
   } else {
-    await globals.db.updateItem('settings', 'backupReminder', (remind) => {
+    await globals.db.update('settings', 'backupReminder', (remind) => {
       remind.value = value;
     });
     qs('#reminderInfo').setStyle('hided');
@@ -50,7 +50,7 @@ async function onReminderClick({e, elem, globals}) {
 
 async function onRemindIdChange(globals, remindId) {
   const reminderList = await globals.getList('reminderList');
-  const remind = await globals.db.updateItem('settings', 'backupReminder', (remind) => {
+  const remind = await globals.db.update('settings', 'backupReminder', (remind) => {
     remind.knowAboutFeature = true;
     remind.id = remindId;
     remind.value = reminderList[remind.id].offset * oneDay;

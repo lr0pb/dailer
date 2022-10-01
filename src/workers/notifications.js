@@ -20,7 +20,7 @@ export async function proccessNotifications(notifs, tag) {
     icon: './icons/downloadBackup.png',
     data: { popup: 'downloadBackup' }
   });
-  await env.db.setItem('settings', notifs);
+  await env.db.set('settings', notifs);
 }
 
 export async function cleaning(notifs, tag) {
@@ -29,7 +29,7 @@ export async function cleaning(notifs, tag) {
     notif.close();
     notifs.callsHistory[notif.timestamp].clean = Date.now();
   }
-  await env.db.setItem('settings', notifs);
+  await env.db.set('settings', notifs);
   if (tag !== 'dailyNotification') return;
   const allClients = await clients.matchAll({ type: 'window' });
   for (let windowClient of allClients) {
@@ -55,14 +55,14 @@ export async function getDayRecap(backupReminder) {
   const { response: recap } = await getYesterdayRecap();
   if (recap.recaped) {
     if (backupReminder) return;
-    const day = await env.env.db.getItem('days', getToday().toString());
+    const day = await env.env.db.get('days', getToday().toString());
     if (day.tasksAmount === 0) return;
     let body = day.tasks[2].length === 0 ? null : '';
     if (body !== '') return;
     await enumerateDay(day, async (id, value, priority) => {
       if (priority !== 2) return;
       if (value === 1) return;
-      const task = await env.db.getItem('tasks', id);
+      const task = await env.db.get('tasks', id);
       body += `- ${task.name}\n`;
     });
     body = body.replace(/\n$/, '');

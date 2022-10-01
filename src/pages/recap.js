@@ -23,10 +23,10 @@ export const recap = {
     const { response, day } = await globals.worker.call({ process: 'getYesterdayRecap' });
     const date = String(getToday() - oneDay);
     qs('#toMain').addEventListener('click', async () => {
-      await globals.db.updateItem('settings', 'session', (session) => {
+      await globals.db.update('settings', 'session', (session) => {
         session.recaped = getToday();
       });
-      await globals.db.updateItem('days', date, (day) => {
+      await globals.db.update('days', date, (day) => {
         delete day.forgottenTasks;
         day.afterDayEndedProccessed = true;
       });
@@ -43,7 +43,7 @@ export const recap = {
     const completeDay = async (actualDay) => {
       actualDay.completed = completedTasks == response.all;
       actualDay.completedTasks = completedTasks;
-      await globals.db.setItem('days', actualDay);
+      await globals.db.set('days', actualDay);
     };
     updateUI();
     if (response.completed) {
@@ -62,7 +62,7 @@ export const recap = {
       updateUI();
     };
     for (let id of day.forgottenTasks) {
-      const td = await globals.db.getItem('tasks', id);
+      const td = await globals.db.get('tasks', id);
       renderTask(globals, td, container, {
         completeTask: true, customDay: date, completeCallback
       });

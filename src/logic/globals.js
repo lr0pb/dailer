@@ -160,12 +160,12 @@ async function closeSettings(callSettingsUpdate, backInHistory) {
 }
 
 async function checkPersist() {
-  const data = await globals.db.getItem('settings', 'persistentStorage');
+  const data = await globals.db.get('settings', 'persistentStorage');
   if (!data.support) return undefined;
   if (data.isPersisted) return data.isPersisted;
   data.attempts++;
   const response = await navigator.storage.persist();
   if (response) data.grantedAt = Date.now();
-  await globals.db.setItem('settings', data);
+  await globals.db.set('settings', data);
   return response;
 }

@@ -1,6 +1,7 @@
 @import 'styles/mixins.scss';
 
 #infoBackground, .infoRect {
+  @include base(1, $largeRadius);
   @include scrollSnap();
 }
 
@@ -10,8 +11,6 @@
 }
 
 #infoBackground {
-  @include base(0, $bigRadius);
-
   min-height: 32rem;
   flex-direction: column-reverse;
   background-image: linear-gradient(135deg, var(--gradientLight) -10%, var(--gradientDark) 60%);
@@ -28,8 +27,6 @@
 }
 
 .infoRect {
-  @include base(1, $bigRadius);
-
   width: calc(var(--fullWidth) * var(--coef) / 2 - 3rem);
   min-height: 24rem;
   background-color: var(--infoRectBg);
@@ -72,7 +69,7 @@
   @include wrapFlex();
   
   & > * {
-    @include base(0, 2);
+    @include base(0, $bigRadius);
     width: calc(var(--fullWidth) / 7);
     text-align: center;
     margin: 0.5rem 0;

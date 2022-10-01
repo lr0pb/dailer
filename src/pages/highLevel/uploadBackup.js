@@ -35,13 +35,13 @@ export async function uploadData(globals, paintPeriods) {
 export async function uploading(globals, data) {
   qsa('.beforeUpload').forEach(hide);
   qsa('.uploadUI').forEach(show);
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   session.lastTasksChange = Date.now();
   const periodsConvert = {};
   for (let per of data.dailer_periods) {
     const period = await createPeriod(globals, per);
     periodsConvert[per.id] = period.id;
-    await globals.db.setItem('periods', period);
+    await globals.db.set('periods', period);
   }
   const periods = await globals.getPeriods();
   const days = {};
@@ -57,9 +57,9 @@ export async function uploading(globals, data) {
     if (
       (task.special == 'oneTime' ? task.periodStart : task.endDate) == getToday() - oneDay
     ) session.updateTasksList.push(task.id);
-    await globals.db.setItem('tasks', task);
+    await globals.db.set('tasks', task);
   }
-  await globals.db.setItem('settings', session);
+  await globals.db.set('settings', session);
   const diff = (getToday() - earliestDay + oneDay) / oneDay;
   for (let i = 0; i < diff; i++) {
     const date = earliestDay + oneDay * i;
@@ -83,7 +83,7 @@ export async function uploading(globals, data) {
       await onActiveDay(endDate, task.history[0]);
     }
   }
-  for (let date in days) { await globals.db.setItem('days', days[date]); }
+  for (let date in days) { await globals.db.set('days', days[date]); }
   globals.pageInfo = { backupUploaded: true };
   qsa('.uploadUI').forEach(hide);
   qsa('.uploadSuccess').forEach(show);

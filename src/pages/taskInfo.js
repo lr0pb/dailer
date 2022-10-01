@@ -25,7 +25,7 @@ export const taskInfo = {
     if (globals.pageInfo.stateChangedTaskId) qs('#edit').style.display = 'none';
     if (!globals.pageInfo.dataChangedTaskId) return;
     if (!globals.pageInfo.taskId) globals.pageInfo.taskId = params.id;
-    const td = await globals.db.getItem('tasks', globals.pageInfo.taskId);
+    const td = await globals.db.get('tasks', globals.pageInfo.taskId);
     const periods = await globals.getPeriods();
     const priorities = await globals.getList('priorities');
     qs('#infoBackground h4').innerHTML = td.name;
@@ -46,7 +46,7 @@ async function renderTaskInfo({globals, page, params}) {
   back.addEventListener('click', () => history.back());
   syncGlobals(globals);
   if (!globals.pageInfo.taskId) globals.pageInfo.taskId = params.id;
-  const task = await globals.db.getItem('tasks', globals.pageInfo.taskId);
+  const task = await globals.db.get('tasks', globals.pageInfo.taskId);
   if (!task) {
     taskTitle = null;
     page.classList.add('center');

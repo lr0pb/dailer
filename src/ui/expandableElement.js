@@ -1,8 +1,8 @@
 const transform = 'translateY(3rem)';
 
-export function togglableElement(elem, styleCode) {
+export function makeExpandable(elem, styleCode) {
   if (!elem || !styleCode) return;
-  elem.classList.add('togglableElement');
+  elem.classList.add('expandableElement');
   elem.setStyle = (styleCode) => {
     if (!['hided', 'showing'].includes(styleCode)) return;
     if (elem.children.length !== 2) return;

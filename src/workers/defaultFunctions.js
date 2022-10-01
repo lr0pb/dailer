@@ -6,7 +6,7 @@ export {
   isCustomPeriod
 } from '../pages/highLevel/periods.js'
 export {
-  setPeriodTitle
+  setPeriodTitle, getHistory
 } from '../pages/highLevel/taskThings.js'
 
 export const env = {

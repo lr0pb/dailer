@@ -8,7 +8,7 @@ export async function paintPeriods(globals) {
   qs('#periodsText').innerHTML = `Select up to <strong>${periodsCount}</strong> periods that will be shown in Periods drop down list of task creation`;
   const pc = qs('#periodsContainer');
   const periods = await globals.getPeriods();
-  const periodData = await globals.db.getItem('settings', 'periods');
+  const periodData = await globals.db.get('settings', 'periods');
   const editTitle = 'View or edit period';
   const markTitle = (per) => `Add period${per ? ` '${per}'` : ''} to drop down list`;
   pc.innerHTML = '';
@@ -42,7 +42,7 @@ export async function paintPeriods(globals) {
 }
 
 async function updatePeriodsList({e, globals, periodsCount, elem }) {
-  const periodData = await globals.db.getItem('settings', 'periods');
+  const periodData = await globals.db.get('settings', 'periods');
   const list = periodData.list;
   const id = elem.dataset.id;
   if (list.includes(id)) {
@@ -68,7 +68,7 @@ async function updatePeriodsList({e, globals, periodsCount, elem }) {
     if (el1 == el2) return 0;
     return -1;
   });
-  await globals.db.setItem('settings', periodData);
+  await globals.db.set('settings', periodData);
   toggleFunc({e, elem});
 }
 

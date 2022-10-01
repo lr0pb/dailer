@@ -113,7 +113,7 @@ export const settings = {
         emoji: emjs[dailerData.experiments ? 'sign' : 'blank'],
         func: async ({e, elem}) => {
           dailerData.experiments = toggleFunc({e, elem});
-          await globals.db.updateItem('settings', 'session', (session) => {
+          await globals.db.update('settings', 'session', (session) => {
             session.experiments = dailerData.experiments;
           });
           globals.message({
@@ -136,7 +136,7 @@ export const settings = {
     }
     if (isFirstOpening) await addNotifications(globals);
     if (qs('#install').dataset.installed == 'true') {
-      const session = await globals.db.getItem('settings', 'session');
+      const session = await globals.db.get('settings', 'session');
       toggleNotifReason(session, null, globals);
     }
   }

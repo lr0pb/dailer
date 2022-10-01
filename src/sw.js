@@ -153,17 +153,17 @@ self.addEventListener('notificationclose', (e) => {
 });
 
 async function statNotification(timestamp, field) {
-  await env.db.updateItem('settings', 'notifications', (notifs) => {
+  await env.db.update('settings', 'notifications', (notifs) => {
     notifs.callsHistory[timestamp][field] = Date.now();
   });
 }
 
 async function checkNotifications(tag) {
   await addToCache(APP_CACHE, 'files', (data) => data);
-  const notifs = await env.db.getItem('settings', 'notifications');
-  const periodicSync = await env.db.getItem('settings', 'periodicSync');
+  const notifs = await env.db.get('settings', 'notifications');
+  const periodicSync = await env.db.get('settings', 'periodicSync');
   periodicSync.callsHistory.push({ timestamp: Date.now() });
-  await env.db.setItem('settings', periodicSync);
+  await env.db.set('settings', periodicSync);
   if (!notifs.enabled || notifs.permission !== 'granted') return;
   await proccessNotifications(notifs, tag);
 }

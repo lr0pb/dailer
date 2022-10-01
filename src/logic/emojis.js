@@ -36,10 +36,10 @@ function getEmojiLink(emoji) {
 
 async function setEmojiLoad(globals) {
   const isAppleEmoji = dailerData.isIOS || dailerData.isMacOS;
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   const isDiffVersions = window._emojiList.lastModified !== session.emojiLastModified;
   session.emojiLastModified = window._emojiList.lastModified;
-  await globals.db.setItem('settings', session);
+  await globals.db.set('settings', session);
   if (!isAppleEmoji && isDiffVersions) {
     globQs('#loadingText').innerHTML = `Loading updated assets...`;
     await loadEmojis();

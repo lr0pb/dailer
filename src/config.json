@@ -70,7 +70,8 @@
     }
   },
   "priorities": [{
-    "title": "Can miss",
+    "title": "Can miss sometimes",
+    "shortTitle": "Can miss",
     "color": "green",
     "emoji": "moon"
   }, {
@@ -78,7 +79,8 @@
     "color": "yellow",
     "selected": true
   }, {
-    "title": "Extra",
+    "title": "Extra important",
+    "shortTitle": "Extra",
     "color": "red",
     "emoji": "fire"
   }],

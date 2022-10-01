@@ -1,5 +1,6 @@
 import { externalNavigate } from './navigation.js'
 import { registerPeriodicSync } from '../pages/settings/notifications.js'
+import { showErrorPage } from '../utils/appState.js';
 
 export async function deployWorkers(globals) {
   const resp = {
@@ -8,7 +9,7 @@ export async function deployWorkers(globals) {
   if (!('serviceWorker' in navigator && 'caches' in window)) return resp;
   await unregisterPreviousSW();
   const reg = await registerServiceWorker(globals);
-  const worker = deployMainWorker();
+  const worker = deployWorker('./workers/mainWorker.js');
   resp.worker = worker;
   if (!('permissions' in navigator)) return resp;
   const isPeriodicSyncSupported = 'periodicSync' in reg;
@@ -41,13 +42,20 @@ async function registerServiceWorker(globals) {
   return reg;
 }
 
-function deployMainWorker() {
-  const worker = new Worker('./workers/mainWorker.js');
+function deployWorker(url) {
+  const worker = new Worker(url);
   worker._callsList = new Map();
+  worker._eventListeners = {};
   worker.call = setCallListener(worker);
-  worker.onmessage = (e) => {
-    if (e.data.error) return showErrorPage(globals, e.data.error);
-    worker._callsList.set(e.data._id, { data: e.data.data, used: false });
+  worker.listen = setWorkerListening(worker);
+  worker.onmessage = async (e) => {
+    const response = e.data;
+    if (response.error) return showErrorPage(globals, response.error);
+    if (response.event) {
+      await onWorkerEvent(worker, response);
+      return;
+    }
+    worker._callsList.set(response._id, { data: response.data, used: false });
   };
   worker.postMessage({isWorkerReady: false});
   return worker;
@@ -71,4 +79,27 @@ function setCallListener(worker) {
     resp.used = true;
     return resp.data;
   };
+}
+
+function setWorkerListening(worker) {
+  return (event, listener) => {
+    if (typeof event !== 'string') return;
+    if (typeof listener !== 'function') return;
+    if (!worker._eventListeners[event]) {
+      worker._eventListeners[event] = {};
+    }
+    const id = Date.now();
+    worker._eventListeners[event][id] = listener;
+    return () => {
+      delete worker._eventListeners[event][id];
+    };
+  };
+}
+
+async function onWorkerEvent(worker, response) {
+  const eventStorage = worker._eventListeners[response.event];
+  if (!eventStorage) return;
+  for (const listenerId in eventStorage) {
+    await eventStorage[listenerId](response.data);
+  }
 }

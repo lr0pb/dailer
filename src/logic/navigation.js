@@ -6,7 +6,7 @@ import { getToday } from '../pages/highLevel/periods.js'
 import { getFirstPage, getParams } from '../utils/appState.js'
 
 async function verifyRenderPage(globals, params) {
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   const firstPage = getFirstPage(session);
   const onbrd = session.onboarded;
   if (!onbrd) return { rndr: 'onboarding' };
@@ -56,7 +56,7 @@ export async function renderAppState(e, back, globals) {
     return;
   }
   globals.pageName = params.page;
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   const rndr = (params.page && pages[params.page]) ? params.page : getFirstPage(session);
   globals.closePopup();
   await hidePage(globals, qs('.current'), rndr);

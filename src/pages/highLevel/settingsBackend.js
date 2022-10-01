@@ -7,7 +7,7 @@ export async function processSettings(globals, periodicSync) {
     setSettings: null,
   } : {};
   await globals.db._isDbReady();
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   if (session) dailerData.experiments = session.experiments;
   if (performance) {
     timeLog.dbLoad = performance.now() - timeLog.dbLoad;
@@ -55,12 +55,13 @@ async function setPeriods(globals) {
   await globals._setCacheConfig();
   const periods = globals._cachedConfigFile.periods;
   for (let perId in periods) {
-    await globals.db.setItem('periods', periods[perId]);
+    await globals.db.set('periods', periods[perId]);
   }
 }
 
 async function checkRecord(globals, recordName, updateFields, onVersionUpgrade) {
-  const data = await globals.db.getItem('settings', recordName);
+  let data = await globals.db.get('settings', recordName);
+  if (Array.isArray(data) && !data.length) data = null;
   let shouldUpdateRecord = false;
   if (data && updateFields && typeof updateFields == 'object') {
     Object.assign(data, updateFields);
@@ -71,7 +72,7 @@ async function checkRecord(globals, recordName, updateFields, onVersionUpgrade) 
     data.version = database.settings[recordName];
     shouldUpdateRecord = true;
   }
-  if (shouldUpdateRecord) await globals.db.setItem('settings', data);
+  if (shouldUpdateRecord) await globals.db.set('settings', data);
   return data ? true : false;
 }
 
@@ -89,7 +90,7 @@ async function addNotifications(globals) {
     Object.assign(byCategories, data.byCategories);
   });
   if (resp) return;
-  await globals.db.setItem('settings', {
+  await globals.db.set('settings', {
     name: 'notifications',
     support: isSupported,
     permission: isSupported ? Notification.permission : null,
@@ -107,7 +108,7 @@ async function addPeriodicSync(globals, periodicSync) {
   const isSupported = periodicSync.support;
   const resp = await checkRecord(globals, 'periodicSync', periodicSync);
   if (resp) return;
-  await globals.db.setItem('settings', {
+  await globals.db.set('settings', {
     name: 'periodicSync',
     support: isSupported,
     permission: isSupported ? periodicSync.permission : null,
@@ -121,7 +122,7 @@ async function addPersistentStorage(globals) {
   const resp = await checkRecord(globals, 'persistentStorage', { support: isSupported });
   if (resp) return;
   const isPersisted = await navigator.storage.persisted();
-  await globals.db.setItem('settings', {
+  await globals.db.set('settings', {
     name: 'persistentStorage',
     support: isSupported,
     isPersisted,
@@ -149,7 +150,7 @@ async function addBackupReminder(globals) {
     }
   });
   if (resp) return;
-  await globals.db.setItem('settings', {
+  await globals.db.set('settings', {
     name: 'backupReminder',
     id: localStorage.remindId ? localStorage.remindId : null,
     value: localStorage.remindValue ? Number(localStorage.remindValue) : null,
@@ -174,12 +175,12 @@ async function addSession(globals) {
   if (resp) {
     if (
       dailerData.isDev || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone
-    ) await globals.db.updateItem('settings', 'session', (session) => {
+    ) await globals.db.update('settings', 'session', (session) => {
       session.installed = true;
     });
     return;
   }
-  await globals.db.setItem('settings', {
+  await globals.db.set('settings', {
     name: 'session',
     firstDayEver: localStorage.firstDayEver ? Number(localStorage.firstDayEver) : null,
     lastTasksChange: localStorage.lastTasksChange ? Number(localStorage.lastTasksChange) : null,
@@ -198,10 +199,10 @@ async function addPeriodsSettings(globals) {
   if (resp) return;
   const defaultList = ['01', '03', '07', '09'];
   const defaultLastId = 50;
-  const periodsCount = await globals.db.hasItem('periods');
+  const periodsCount = await globals.db.has('periods');
   const standartCount = 9;
   let list = null, lastId = null;
-  await globals.db.updateItem('settings', 'session', (session) => {
+  await globals.db.update('settings', 'session', (session) => {
     if (!session.periodsList || !session.lastPeriodId) return;
     list = session.periodsList;
     lastId = session.lastPeriodId;
@@ -209,7 +210,7 @@ async function addPeriodsSettings(globals) {
     delete session.lastPeriodId;
     delete session.defaultLastPeriodId;
   });
-  await globals.db.setItem('settings', {
+  await globals.db.set('settings', {
     name: 'periods',
     defaultList, defaultLastId,
     list: list || localStorage.periodsList ? JSON.parse(localStorage.periodsList) : defaultList,

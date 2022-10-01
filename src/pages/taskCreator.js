@@ -5,6 +5,7 @@ import {
 } from '../utils/dom.js'
 import { safeDataInteractions, syncGlobals, updateState } from '../utils/appState.js'
 import { renderToggler, toggleFunc } from '../ui/toggler.js'
+import { renderSegmentedControl } from '../ui/segments.js'
 
 let taskTitle = null;
 
@@ -23,7 +24,7 @@ export const taskCreator = {
       <h3 id="nameTitle">Enter task you will control</h3>
       <input type="text" id="name" placeHolder="Task name">
       <h3>How important is this task?</h3>
-      <select id="priority" title="Select how important is this task"></select>
+      <div id="priorityContainer"></div>
       <h3>When do you want to perform this task?</h3>
       <select id="period" title="Select when do you want to perform this task"></select>
       <h3 id="description" class="hidedUI"></h3>
@@ -52,7 +53,7 @@ export const taskCreator = {
     if (globals.pageInfo.taskAction == 'edit') {
       if (period.children.length) return;
       const id = globals.pageInfo.taskId;
-      const task = await globals.db.getItem('tasks', id);
+      const task = await globals.db.get('tasks', id);
       const per = periods[task.periodId];
       const opt = document.createElement('option');
       opt.setAttribute('selected', '');
@@ -77,7 +78,7 @@ export const taskCreator = {
 
 async function getPeriods(globals) {
   const periods = await globals.getPeriods();
-  const periodData = await globals.db.getItem('settings', 'periods');
+  const periodData = await globals.db.get('settings', 'periods');
   const periodsList = [];
   for (let per of periodData.list) {
     if (periods[per]) periodsList.push(periods[per]);
@@ -89,10 +90,24 @@ async function getPeriods(globals) {
 async function onTaskCreator({globals, page, params}) {
   const { back, startDate, period, date } = getElements('back', 'startDate', 'period', 'date');
   back.addEventListener('click', () => history.back());
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   if (!session.firstDayEver) hide(back);
   const priorities = await globals.getList('priorities');
-  createOptionsList(qs('#priority'), priorities);
+  const segments = [];
+  let highlightIndex = 0;
+  for (let i = 0; i < priorities.length; i++) {
+    const prior = priorities[i];
+    if (prior.selected) highlightIndex = i;
+    segments.push({
+      name: `${
+        dailerData.isWideInterface && prior.emoji ? `${emjs[prior.emoji]} ` : ''
+      }${prior.shortTitle || prior.title}`,
+      id: i, color: prior.color
+    });
+  }
+  renderSegmentedControl({
+    page: qs('#priorityContainer'), id: 'priority', segments, highlightIndex
+  });
   const startDateOptions = await globals.getList('startDateOptions');
   createOptionsList(startDate, startDateOptions);
   renderToggler({
@@ -111,11 +126,15 @@ async function onTaskCreator({globals, page, params}) {
   if (params.wishlist == 'true') {
     if (!globals.pageInfo) globals.pageInfo = {};
     globals.pageInfo.lastPeriodValue = '09';
+    updateState({lastPeriodValue: '09'});
     period.setAttribute('disabled', '');
     qs('[data-id="wishlist"]').activate();
     qs('[data-id="wishlist"] button').setAttribute('disabled', '');
   }
-  safeDataInteractions(['name', 'priority', 'period', 'startDate', 'date', 'endDate']);
+  safeDataInteractions(
+    ['name', 'period', 'startDate', 'date', 'endDate'],
+    ['priority', 'enableEndDate', 'wishlist']
+  );
   await taskCreator.onSettingsUpdate({globals});
   period.addEventListener('change', async (e) => await onPeriodChange(e, globals));
   startDate.addEventListener('change', onStartDateChange);
@@ -127,7 +146,7 @@ async function onTaskCreator({globals, page, params}) {
   let isEdit = params.id || globals.pageInfo.taskAction == 'edit';
   let td;
   if (isEdit) {
-    td = await globals.db.getItem('tasks', globals.pageInfo.taskId);
+    td = await globals.db.get('tasks', globals.pageInfo.taskId);
     if (!td) isEdit = false;
   }
   if (isEdit) {
@@ -144,16 +163,16 @@ async function onTaskCreator({globals, page, params}) {
 
 async function checkPeriodPromo(globals) {
   const setKnowTrue = async () => {
-    await globals.db.updateItem('settings', 'periods', (data) => {
+    await globals.db.update('settings', 'periods', (data) => {
       data.knowAboutFeature = true;
     });
   };
   if (!dailerData.forcePeriodPromo) {
-    const periodData = await globals.db.getItem('settings', 'periods');
+    const periodData = await globals.db.get('settings', 'periods');
     if (periodData.knowAboutFeature) return;
-    const tasksCount = await globals.db.hasItem('tasks');
+    const tasksCount = await globals.db.has('tasks');
     if (tasksCount < periodData.tasksToShowPromo) return;
-    const periodsCount = await globals.db.hasItem('periods');
+    const periodsCount = await globals.db.has('periods');
     if (periodsCount > periodData.standartPeriodsAmount) {
       await setKnowTrue();
       return;
@@ -181,10 +200,10 @@ async function onSaveTaskClick(globals, td, isEdit) {
     state: 'fail', text: 'Fill all fields'
   });
   qs('#saveTask').setAttribute('disabled', '');
-  const session = await globals.db.updateItem('settings', 'session', (session) => {
+  const session = await globals.db.update('settings', 'session', (session) => {
     session.lastTasksChange = Date.now();
   });
-  globals.db.setItem('tasks', task);
+  globals.db.set('tasks', task);
   globals.message({ state: 'success', text: isEdit ? 'Task saved' : 'Task added' });
   if (!globals.pageInfo) globals.pageInfo = {};
   globals.pageInfo.dataChangedTaskId = task.id;
@@ -196,14 +215,13 @@ async function onSaveTaskClick(globals, td, isEdit) {
 async function enterEditTaskMode(globals, td) {
   const periods = await globals.getPeriods();
   qs('#taskAction').innerHTML = 'Edit';
-  //qs('#nameTitle').innerHTML = 'You can change task name only once';
-  const { name, priority, date, dateTitle, endDate } = getElements(
-    'name', 'priority', 'date', 'dateTitle', 'endDate'
+  const { name, date, dateTitle, endDate } = getElements(
+    'name', 'date', 'dateTitle', 'endDate'
   );
   name.value = td.name;
-  priority.value = td.priority;
+  qs('[data-id="priority"]').setValue(td.priority);
   if (td.disabled) {
-    const disableElems = [name, priority];
+    const disableElems = [name];
     disableElems.forEach((elem) => elem.setAttribute('disabled', ''));
   }
   const per = periods[td.periodId];
@@ -332,12 +350,12 @@ function onStartDateChange(e) {
 
 export async function createTask(globals, td = {}) {
   const isPageExist = qs('#name') ? true : false;
-  const e = isPageExist ? getElements('name', 'period', 'priority', 'date', 'endDate') : {};
+  const e = isPageExist ? getElements('name', 'period', 'date', 'endDate') : {};
   const task = await globals.worker.call({ process: 'createTask', args: [{
     td,
     name: isPageExist ? e.name.value : td.name,
     period: isPageExist ? e.period.value : td.periodId,
-    priority: isPageExist ? Number(e.priority.value) : td.priority,
+    priority: isPageExist ? getValue('priority') : td.priority,
     date: isPageExist ? getDate(e.date) : td.periodStart,
     enableEndDate: isPageExist ? getValue('enableEndDate') : td.endDate,
     endDate: isPageExist ? getDate(e.endDate) + oneDay : td.endDate,

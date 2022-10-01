@@ -35,14 +35,14 @@ const internals = {
 };
 
 async function disableTask(taskId) {
-  await env.db.updateItem('tasks', taskId, disable);
-  await env.db.setItem('settings', env.session);
+  await env.db.update('tasks', taskId, disable);
+  await env.db.set('settings', env.session);
 }
 
 function updateSession(item) { env.session = item; }
 
 async function checkNotifications() {
-  const notifs = await env.db.getItem('settings', 'notifications');
+  const notifs = await env.db.get('settings', 'notifications');
   let show = false;
   for (let i = 0; i < notifs.showPromoLag.length; i++) {
     if (!notifs.firstPromoDay[i]) notifs.firstPromoDay.push(getToday());
@@ -55,19 +55,19 @@ async function checkNotifications() {
     if (!lag(i + 1)) break;
     if (end + lag(i + 1) > getToday()) break;
   }
-  await env.db.setItem('settings', notifs);
+  await env.db.set('settings', notifs);
   return { show };
 }
 
 async function checkReminderPromo() {
   const resp = { show: false };
-  const remind = await env.db.getItem('settings', 'backupReminder');
+  const remind = await env.db.get('settings', 'backupReminder');
   if (remind.knowAboutFeature) return resp;
-  const session = await env.db.getItem('settings', 'session');
+  const session = await env.db.get('settings', 'session');
   if (getToday() < session.firstDayEver + oneDay * remind.dayToStartShowPromo) return resp;
   if (!remind.firstPromoDay) {
     remind.firstPromoDay = getToday();
-    await env.db.setItem('settings', remind);
+    await env.db.set('settings', remind);
   }
   if (remind.firstPromoDay + oneDay * remind.daysToShowPromo <= getToday()) return resp;
   resp.show = true;

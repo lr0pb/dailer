@@ -3,11 +3,11 @@ import { renderToggler, toggleFunc } from '../../ui/toggler.js'
 import { installApp } from '../../utils/appState.js'
 
 export async function isNotificationsAvailable(globals) {
-  const periodicSync = await globals.db.getItem('settings', 'periodicSync');
+  const periodicSync = await globals.db.get('settings', 'periodicSync');
   if (dailerData.isIOS || dailerData.isMacOS || !('Notification' in window) || !periodicSync.support) {
     return false;
   }
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   if (!session.installed && !globals.installPrompt) return false;
   return true;
 }
@@ -17,8 +17,8 @@ export async function addNotifications(globals) {
   if (!isSupported) {
     return qs('.notifStyle').innerHTML = '.notif { display: none !important; }';
   }
-  const session = await globals.db.getItem('settings', 'session');
-  const notifications = await globals.db.getItem('settings', 'notifications');
+  const session = await globals.db.get('settings', 'session');
+  const notifications = await globals.db.get('settings', 'notifications');
   const currentValue = getNotifPerm(session, null, notifications.enabled);
   toggleNotifReason(session, currentValue, globals);
   renderToggler({
@@ -57,7 +57,7 @@ export function toggleNotifReason(session, value, globals) {
       qs('#install').onclick = async () => {
         if (!globals.installPrompt) return;
         await installApp(globals);
-        const actualSession = await globals.db.getItem('settings', 'session');
+        const actualSession = await globals.db.get('settings', 'session');
         const actualValue = getNotifPerm(actualSession);
         setNotifTogglerState(null, actualValue);
         toggleNotifReason(actualSession, actualValue, globals);
@@ -71,8 +71,8 @@ export function toggleNotifReason(session, value, globals) {
 }
 
 export async function fillNotifTopics(globals, enabled) {
-  const session = await globals.db.getItem('settings', 'session');
-  const notifications = await globals.db.getItem('settings', 'notifications');
+  const session = await globals.db.get('settings', 'session');
+  const notifications = await globals.db.get('settings', 'notifications');
   if (!enabled && enabled !== 0) {
     enabled = notifications.enabled ? 1 : 0;
   }
@@ -88,7 +88,7 @@ export async function fillNotifTopics(globals, enabled) {
         emoji: emjs[firstValue ? 'sign' : 'blank'],
         func: async ({e, elem}) => {
           const value = toggleFunc({e, elem});
-          await globals.db.updateItem('settings', 'notifications', (data) => {
+          await globals.db.update('settings', 'notifications', (data) => {
             data.byCategories[item.name] = value ? true : false;
           });
         }
@@ -104,7 +104,7 @@ function setNotifTogglerState(elem, value) {
 }
 
 async function onNotifTogglerClick({e, elem, globals}) {
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   const target = e.target.dataset.action ? e.target : e.target.parentElement;
   if (!session.installed) {
     setNotifTogglerState(elem, 3);
@@ -125,7 +125,7 @@ async function onNotifTogglerClick({e, elem, globals}) {
     return target.removeAttribute('disabled');
   }
   const value = toggleFunc({e, elem});
-  await globals.db.updateItem('settings', 'notifications', (data) => {
+  await globals.db.update('settings', 'notifications', (data) => {
     data.enabled = value ? true : false;
   });
   updateNotifTopics(!value);
@@ -133,7 +133,7 @@ async function onNotifTogglerClick({e, elem, globals}) {
 
 export async function requestNotifications(globals) {
   const resp = await Notification.requestPermission();
-  const data = await globals.db.updateItem('settings', 'notifications', (data) => {
+  const data = await globals.db.update('settings', 'notifications', (data) => {
     data.permission = resp;
     data.enabled = resp == 'granted' ? true : false;
     if (data.enabled) data.grantedAt.push(Date.now());
@@ -146,7 +146,7 @@ export async function requestNotifications(globals) {
       state: 'fail', text: 'You denied in permission. Grant it via site settings in browser to enable notifications'
     });
   }
-  const session = await globals.db.getItem('settings', 'session');
+  const session = await globals.db.get('settings', 'session');
   const value = getNotifPerm(session, resp, data.enabled);
   const elem = qs('[data-id="notifications"]');
   if (!elem) return value;

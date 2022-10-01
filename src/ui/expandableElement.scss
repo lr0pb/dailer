@@ -1,4 +1,4 @@
-.togglableElement {
+.expandableElement {
   & > *:first-child {
     transition: transform var(--normalAnim);
   }

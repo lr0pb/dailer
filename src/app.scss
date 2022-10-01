@@ -9,14 +9,8 @@
 @import 'ui/taskInfo.scss';
 
 @import 'ui/toggler.scss';
-@import 'ui/togglableElement.scss';
-
-.dataLine, .columnFlex {
-  display: flex;
-}
-.columnFlex {
-  flex-direction: column;
-}
+@import 'ui/expandableElement.scss';
+@import 'ui/segments.scss';
 
 .pageBtn, .hidedUI, input[type="file"], .uploadUI, .uploadSuccess,
 .downloadUI, .downloadLink, .historyMonth > [data-used="false"], .completed, .forgotten,
@@ -25,6 +19,7 @@
 }
 
 .dataLine {
+  display: flex;
   min-width: var(--fullWidth);
   align-items: baseline;
 }

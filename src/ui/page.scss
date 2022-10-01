@@ -1,11 +1,6 @@
 @import 'styles/mixins.scss';
 
 .doubleColumns {
-  & > *, .stretch > * {
-    width: var(--fullWidth);
-    margin-top: 0 !important;
-    margin-left: 0; margin-right: 0;
-  }
   & .fullHeight { min-height: var(--fullHeight); }
   & > .content {
     min-width: var(--fullWidth);
@@ -13,9 +8,23 @@
   }
 }
 
+.doubleColumns, .stretch {
+  & > *:not(h1, h2, h3, h4, p) {
+    width: var(--fullWidth);
+    margin-top: 0 !important;
+    margin-left: 0; margin-right: 0;
+  }
+}
+
 .first {
   margin-top: 2rem !important;
   .stretch > & { margin-top: 1.5rem !important; }
+}
+
+.columnFlex {
+  @include columnFlex();
+  & .first { margin-top: 1rem !important; }
+  & .task { margin-bottom: 1rem !important; }
 }
 
 body, .page, #settings, #popup, noscript {

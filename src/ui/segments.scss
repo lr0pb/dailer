@@ -1,0 +1,50 @@
+@import 'styles/mixins.scss';
+
+.segments {
+  @include rowFlex();
+  @include fullComponent(0);
+  @include defaultPositioning();
+  position: relative;
+  min-height: 9rem;
+
+  &, & > div {
+    border-width: 0;
+    width: var(--fullWidth);
+  }
+}
+
+$segmentHeight: 7rem;
+$segmentRadius: $smallRadius;
+$segmentVMargin: 1rem;
+$segmentHMargin: 0.5rem;
+
+.segmentsContainer {
+  @include rowFlex();
+
+  & > div {
+    @include centerFlex();
+    @include component(0, $segmentRadius);
+    width: 100%;
+    height: $segmentHeight;
+    margin: $segmentVMargin $segmentHMargin;
+    background-color: transparent;
+
+    &:first-child { margin-left: 1rem; }
+    &:last-child { margin-right: 1rem; }
+    &.highlighted {
+      &:active, &:focus { background-color: var(--overlayBg); }
+    }
+  }
+}
+
+.segmentsRunner {
+  @include rounded($segmentRadius);
+
+  --width: calc((var(--fullWidth) - (1rem + var(--count) * 1rem)) / var(--count));
+  width: var(--width) !important;
+  height: $segmentHeight;
+  margin: $segmentVMargin;
+  background-color: var(--overlayBg);
+  transform: translateX(calc((var(--width) + $segmentHMargin * 2) * var(--index)));
+  transition: transform var(--fastAnim) cubic-bezier(0.58, -0.15, 0.45, 1.0);
+}
