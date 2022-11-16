@@ -1,11 +1,11 @@
 import {
   env, database, IDB,
   oneDay, getToday, isCustomPeriod,
-  setPeriodTitle
+  setPeriodTitle, taskHistory
 } from './defaultFunctions.js'
 import {
   updatePeriods, createDay, getRawDay, disable,
-  getYesterdayRecap, checkBackupReminder
+  getYesterdayRecap, finishDay, checkBackupReminder
 } from './sharedFunctions.js'
 
 env.db = new IDB(database.name, database.version, database.stores);
@@ -31,7 +31,8 @@ const internals = {
   disable: disableTask,
   createDay, getRawDay, createTask,
   updateSession, updatePeriods,
-  getYesterdayRecap, checkNotifications, checkReminderPromo,
+  getYesterdayRecap, finishDay,
+  checkNotifications, checkReminderPromo,
 };
 
 async function disableTask(taskId) {
@@ -39,7 +40,9 @@ async function disableTask(taskId) {
   await env.db.set('settings', env.session);
 }
 
-function updateSession(item) { env.session = item; }
+async function updateSession() {
+  env.session = await env.db.get('settings', 'session');
+}
 
 async function checkNotifications() {
   const notifs = await env.db.get('settings', 'notifications');
@@ -96,18 +99,22 @@ async function createTask({
     : (per.getWeekStart
        ? new Date().getDay() - 1
        : per.periodDay),
-    history: td.history || [],
+    history: td.history || {},
     special: td.periodId ? td.special : per.special,
     //nameEdited: td.periodId ? td.nameEdited : false,
     disabled: td.disabled || false,
     deleted: false
   };
-  if (!task.special) delete task.special;
+  if (!task.special) {
+    delete task.special;
+    task.streak = td.streak || 0;
+  }
   //if (td.name && task.name != td.name) task.nameEdited = true;
   //if (td.nameEdited) task.name = td.name;
   if (td.created) task.created = td.created;
   if (enableEndDate && endDate) task.endDate = endDate;
   if (task.special == 'untilComplete' && wishlist) task.wishlist = true;
   setPeriodTitle(task);
+  if (!td.history) taskHistory.init(task);
   return task;
 }

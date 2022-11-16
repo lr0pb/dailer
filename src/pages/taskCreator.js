@@ -25,6 +25,7 @@ export const taskCreator = {
       <input type="text" id="name" placeHolder="Task name">
       <h3>How important is this task?</h3>
       <div id="priorityContainer"></div>
+      <div id="taskTypeContainer"></div>
       <h3>When do you want to perform this task?</h3>
       <select id="period" title="Select when do you want to perform this task"></select>
       <h3 id="description" class="hidedUI"></h3>
@@ -57,6 +58,7 @@ export const taskCreator = {
       const per = periods[task.periodId];
       const opt = document.createElement('option');
       opt.setAttribute('selected', '');
+      opt.value = per.id;
       opt.innerHTML = per.title || task.ogTitle || task.periodTitle;
       period.append(opt);
       return period.setAttribute('disabled', '');
@@ -107,6 +109,13 @@ async function onTaskCreator({globals, page, params}) {
   }
   renderSegmentedControl({
     page: qs('#priorityContainer'), id: 'priority', segments, highlightIndex
+  });
+  if (dailerData.experiments) renderSegmentedControl({
+    page: qs('#taskTypeContainer'), id: 'type', segments: [
+      { name: 'Regular task' }, { name: 'Continious task' }
+    ], onClick: ({index}) => {
+      //
+    }
   });
   const startDateOptions = await globals.getList('startDateOptions');
   createOptionsList(startDate, startDateOptions);

@@ -26,10 +26,7 @@ export const recap = {
       await globals.db.update('settings', 'session', (session) => {
         session.recaped = getToday();
       });
-      await globals.db.update('days', date, (day) => {
-        delete day.forgottenTasks;
-        day.afterDayEndedProccessed = true;
-      });
+      await globals.worker.call({ process: 'finishDay', args: [ day ] });
       await globals.paintPage('main', { replaceState: true });
     });
     if (!response.show) return qs('#toMain').click();

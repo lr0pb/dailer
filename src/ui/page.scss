@@ -9,7 +9,7 @@
 }
 
 .doubleColumns, .stretch {
-  & > *:not(h1, h2, h3, h4, p) {
+  & > *:not(h1, h2, h3, h4, p, .floatingMsg) {
     width: var(--fullWidth);
     margin-top: 0 !important;
     margin-left: 0; margin-right: 0;
@@ -28,7 +28,6 @@
 }
 
 body, .page, #settings, #popup, noscript {
-  @include text();
   width: 100vw; height: 100vh;
   height: stretch;
   height: -webkit-fill-available;

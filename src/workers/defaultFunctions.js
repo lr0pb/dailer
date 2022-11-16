@@ -6,8 +6,11 @@ export {
   isCustomPeriod
 } from '../pages/highLevel/periods.js'
 export {
-  setPeriodTitle, getHistory
+  setPeriodTitle
 } from '../pages/highLevel/taskThings.js'
+export {
+  getMonthId, getHistory, enumerateDay, taskHistory
+} from '../pages/highLevel/taskHistory.js'
 
 export const env = {
   db: null,

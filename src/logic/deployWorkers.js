@@ -9,7 +9,7 @@ export async function deployWorkers(globals) {
   if (!('serviceWorker' in navigator && 'caches' in window)) return resp;
   await unregisterPreviousSW();
   const reg = await registerServiceWorker(globals);
-  const worker = deployWorker('./workers/mainWorker.js');
+  const worker = deployWorker(globals, './workers/mainWorker.js');
   resp.worker = worker;
   if (!('permissions' in navigator)) return resp;
   const isPeriodicSyncSupported = 'periodicSync' in reg;
@@ -42,7 +42,7 @@ async function registerServiceWorker(globals) {
   return reg;
 }
 
-function deployWorker(url) {
+function deployWorker(globals, url) {
   const worker = new Worker(url);
   worker._callsList = new Map();
   worker._eventListeners = {};

@@ -64,6 +64,7 @@
 }
 
 #message {
+  @include text(monospace);
   @include fixedCenter();
   @include base(0, $bigRadius);
 

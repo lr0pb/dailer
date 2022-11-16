@@ -5,6 +5,7 @@ import { renderTask } from './highLevel/taskThings.js'
 import { downloadData } from './highLevel/createBackup.js'
 import { isNotificationsAvailable, requestNotifications } from './settings/notifications.js'
 import { popups } from './popups.js'
+import { enumerateDay } from './highLevel/taskHistory.js'
 
 export const main = {
   get header() { return `${emjs.sword} Today's tasks`},
@@ -18,6 +19,7 @@ export const main = {
     <button id="toPlan" class="secondary">${emjs.notes} Edit tasks</button>
   `},
   script: async ({globals, page}) => {
+    qs('#toHistory').addEventListener('click', () => globals.paintPage('daysHistory'));
     qs('#toPlan').addEventListener('click', () => globals.paintPage('planCreator'));
     if (dailerData.experiments) {
       globals.pageButton({
@@ -47,7 +49,18 @@ async function updatePage({globals, page}) {
 }
 
 async function renderDay({globals, page}) {
+  const unregister = globals.worker.listen('historyMigration', (stage) => {
+    page.innerHTML = `
+      <h2 class="emoji">${emjs.fileBox}${emjs.eyes}</h2>
+      <h2>${
+        !stage
+        ? 'dailer migrate your history data to the new format...'
+        : stage == 1 ? 'Tasks was converted...' : 'Days was converted!'
+      }</h2>
+    `;
+  });
   const { day } = await globals.worker.call({ process: 'createDay' });
+  unregister();
   if (day == 'error') {
     page.innerHTML = `
       <h2 class="emoji">${emjs.magicBall}</h2>
@@ -60,17 +73,14 @@ async function renderDay({globals, page}) {
   }
   page.classList.remove('center');
   page.innerHTML = '';
-  for (let i = day.tasks.length - 1; i > -1; i--) {
-    const tasks = day.tasks[i];
-    for (let id in tasks) {
-      const td = await globals.db.get('tasks', id);
-      renderTask(globals, td, page, {
-        completeTask: true, openTask: true
-      });
-    }
-  }
+  await enumerateDay(day, async (id) => {
+    const td = await globals.db.get('tasks', id);
+    renderTask(globals, td, page, {
+      completeTask: true, openTask: true
+    });
+  });
   if (dailerData.isDoubleColumns) {
-    addTaskButton(globals, qs('.footer'), 'task');
+    if (!qs('#addTaskButton')) addTaskButton(globals, qs('.footer'), 'task');
   } else {
     addTaskButton(globals, page, 'task', 'transparent');
   }
@@ -83,6 +93,7 @@ function addTaskButton(globals, page, lastWord, customClass) {
     button.classList.add(customClass);
     button.style.margin = 0;
   }
+  button.id = 'addTaskButton';
   button.innerHTML = `${emjs.paperWPen} Add ${lastWord}`;
   button.addEventListener('click', () => globals.paintPage('taskCreator'));
   page.append(button);
@@ -168,7 +179,7 @@ async function checkReminderPromo(globals) {
     onClick: async (e) => {
       await globals.openSettings('manageData');
       e.target.parentElement.remove();
-      await globals.db.update('settings', 'backupReminder', (data) => {
+      await globals.db.updateItem('settings', 'backupReminder', (data) => {
         data.knowAboutFeature = true;
       });
     }

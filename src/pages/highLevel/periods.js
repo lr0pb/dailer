@@ -47,3 +47,7 @@ export function getWeekStart() { // date in milliseconds
   const day = new Date(getToday());
   return day.setDate(day.getDate() - day.getDay());
 }
+
+export function getMonthLastDate(month, year) {
+  return new Date(Number(year), Number(month) + 1, 0).getTime();
+}

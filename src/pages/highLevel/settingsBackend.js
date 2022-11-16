@@ -1,5 +1,5 @@
 import { database } from '../../logic/IDB.js'
-import { globQs as qs, globQsa as qsa } from '../../utils/dom.js'
+import { globQsa as qsa } from '../../utils/dom.js'
 
 export async function processSettings(globals, periodicSync) {
   const timeLog = performance ? {
@@ -13,21 +13,29 @@ export async function processSettings(globals, periodicSync) {
     timeLog.dbLoad = performance.now() - timeLog.dbLoad;
     timeLog.setSettings = performance.now();
   }
-  await Promise.all([
-    setPeriods(globals),
-    addNotifications(globals),
-    addPeriodicSync(globals, periodicSync),
-    addPersistentStorage(globals),
-    addBackupReminder(globals),
-    addSession(globals),
-    addPeriodsSettings(globals),
-  ]);
-  await globals.db.onDataUpdate('settings', async (store, item) => {
-    if (!item) return;
-    if (item.name !== 'session') return;
-    await globals.worker.call({ process: 'updateSession', args: item });
+  const methods = [
+    addNotifications, addPeriodicSync, addPersistentStorage,
+    addBackupReminder, addSession, addPeriodsSettings
+  ];
+  const dataToSetInDB = [];
+  await Promise.all(methods.map((method) => {
+    return new Promise(async (res) => {
+      const generator = method(globals, periodicSync);
+      const checkOptions = await generator.next();
+      const resp = await checkRecord(globals, ...checkOptions.value);
+      if (resp) return res();
+      const settingsData = await generator.next();
+      dataToSetInDB.push(settingsData.value);
+      res();
+    });
+  }));
+  await setPeriods(globals);
+  await globals.db.set('settings', dataToSetInDB);
+  await globals.db.onDataUpdate('settings', async ({ item }) => {
+    if (item !== 'session') return;
+    await globals.worker.call({ process: 'updateSession' });
   });
-  await globals.db.onDataUpdate('periods', async (store, item) => {
+  await globals.db.onDataUpdate('periods', async () => {
     await globals.worker.call({ process: 'updatePeriods' });
   });
   if (performance) {
@@ -53,15 +61,18 @@ export function toggleExperiments() {
 
 async function setPeriods(globals) {
   await globals._setCacheConfig();
-  const periods = globals._cachedConfigFile.periods;
-  for (let perId in periods) {
-    await globals.db.set('periods', periods[perId]);
+  const predefinedPeriods = globals._cachedConfigFile.periods;
+  const periodsArray = [];
+  for (let perId in predefinedPeriods) {
+    periodsArray.push(predefinedPeriods[perId]);
   }
+  await globals.db.set('periods', periodsArray);
 }
 
-async function checkRecord(globals, recordName, updateFields, onVersionUpgrade) {
-  let data = await globals.db.get('settings', recordName);
-  if (Array.isArray(data) && !data.length) data = null;
+async function checkRecord(
+  globals, recordName, updateFields, onVersionUpgrade, onRecordExists
+) {
+  const data = await globals.db.get('settings', recordName);
   let shouldUpdateRecord = false;
   if (data && updateFields && typeof updateFields == 'object') {
     Object.assign(data, updateFields);
@@ -73,24 +84,26 @@ async function checkRecord(globals, recordName, updateFields, onVersionUpgrade) 
     shouldUpdateRecord = true;
   }
   if (shouldUpdateRecord) await globals.db.set('settings', data);
+  if (data && onRecordExists) await onRecordExists();
   return data ? true : false;
 }
 
-async function addNotifications(globals) {
+async function* addNotifications(globals) {
   const isSupported = 'Notification' in window;
   const updateFields = {
     support: isSupported, permission: isSupported ? Notification.permission : null,
   };
   const byCategories = {};
   const list = await globals.getList('notifications');
-  for (let categorie of list) {
-    byCategories[categorie.name] = categorie.enabled;
+  for (let category of list) {
+    byCategories[category.name] = category.enabled;
   }
-  const resp = await checkRecord(globals, 'notifications', updateFields, (data) => {
-    Object.assign(byCategories, data.byCategories);
-  });
-  if (resp) return;
-  await globals.db.set('settings', {
+  yield [
+    'notifications', updateFields, (data) => {
+      Object.assign(byCategories, data.byCategories);
+    }
+  ];
+  return {
     name: 'notifications',
     support: isSupported,
     permission: isSupported ? Notification.permission : null,
@@ -101,39 +114,37 @@ async function addNotifications(globals) {
     daysToShowPromo: [2, 3, 5],
     callsHistory: {},
     version: database.settings.notifications
-  });
+  };
 }
 
-async function addPeriodicSync(globals, periodicSync) {
+async function* addPeriodicSync(globals, periodicSync) {
   const isSupported = periodicSync.support;
-  const resp = await checkRecord(globals, 'periodicSync', periodicSync);
-  if (resp) return;
-  await globals.db.set('settings', {
+  yield ['periodicSync', periodicSync];
+  return {
     name: 'periodicSync',
     support: isSupported,
     permission: isSupported ? periodicSync.permission : null,
     callsHistory: [],
     version: database.settings.periodicSync
-  });
+  };
 }
 
-async function addPersistentStorage(globals) {
+async function* addPersistentStorage() {
   const isSupported = ('storage' in navigator) && ('persist' in navigator.storage);
-  const resp = await checkRecord(globals, 'persistentStorage', { support: isSupported });
-  if (resp) return;
+  yield ['persistentStorage', { support: isSupported }];
   const isPersisted = await navigator.storage.persisted();
-  await globals.db.set('settings', {
+  return {
     name: 'persistentStorage',
     support: isSupported,
     isPersisted,
     attempts: localStorage.persistAttempts ? Number(localStorage.persistAttempts) : 0,
     grantedAt: localStorage.persistGranted ? Number(localStorage.persistGranted) : null,
     version: database.settings.persistentStorage
-  });
+  };
 }
 
-async function addBackupReminder(globals) {
-  const resp = await checkRecord(globals, 'backupReminder', null, (data) => {
+async function* addBackupReminder() {
+  yield ['backupReminder', null, (data) => {
     if (data.version == 1) {
       data.id = data.remindId;
       data.value = data.remindValue;
@@ -148,9 +159,8 @@ async function addBackupReminder(globals) {
       data.lastTimeDownloaded = 0;
       data.daysToShowPopup = 11;
     }
-  });
-  if (resp) return;
-  await globals.db.set('settings', {
+  }];
+  return {
     name: 'backupReminder',
     id: localStorage.remindId ? localStorage.remindId : null,
     value: localStorage.remindValue ? Number(localStorage.remindValue) : null,
@@ -163,24 +173,22 @@ async function addBackupReminder(globals) {
     firstPromoDay: null,
     daysToShowPromo: 4,
     version: database.settings.backupReminder
-  });
+  };
 }
 
-async function addSession(globals) {
-  const resp = await checkRecord(globals, 'session', null, (data) => {
+async function* addSession(globals) {
+  yield ['session', null, (data) => {
     if (data.version == 1) {
       data.emojiLastModified = 0;
     }
-  });
-  if (resp) {
+  }, async () => {
     if (
       dailerData.isDev || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone
     ) await globals.db.update('settings', 'session', (session) => {
       session.installed = true;
     });
-    return;
-  }
-  await globals.db.set('settings', {
+  }];
+  return {
     name: 'session',
     firstDayEver: localStorage.firstDayEver ? Number(localStorage.firstDayEver) : null,
     lastTasksChange: localStorage.lastTasksChange ? Number(localStorage.lastTasksChange) : null,
@@ -191,12 +199,11 @@ async function addSession(globals) {
     experiments: localStorage.experiments ? Number(localStorage.experiments) : 0,
     emojiLastModified: 0,
     version: database.settings.session
-  });
+  };
 }
 
-async function addPeriodsSettings(globals) {
-  const resp = await checkRecord(globals, 'periods');
-  if (resp) return;
+async function* addPeriodsSettings(globals) {
+  yield ['periods', { tasksToShowPromo: 100 }];
   const defaultList = ['01', '03', '07', '09'];
   const defaultLastId = 50;
   const periodsCount = await globals.db.has('periods');
@@ -210,14 +217,14 @@ async function addPeriodsSettings(globals) {
     delete session.lastPeriodId;
     delete session.defaultLastPeriodId;
   });
-  await globals.db.set('settings', {
+  return {
     name: 'periods',
     defaultList, defaultLastId,
     list: list || localStorage.periodsList ? JSON.parse(localStorage.periodsList) : defaultList,
     lastId: lastId || localStorage.lastPeriodId ? Number(localStorage.lastPeriodId) : defaultLastId,
     standartPeriodsAmount: standartCount,
-    tasksToShowPromo: 3,
+    tasksToShowPromo: 100,
     knowAboutFeature: periodsCount > standartCount ? true : false,
     version: database.settings.periods
-  });
+  };
 }

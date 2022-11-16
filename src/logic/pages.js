@@ -9,8 +9,9 @@ import { periodCreator } from '../pages/periodCreator.js'
 import { debugPage } from '../pages/debugPage.js'
 import { reloaded } from '../pages/reloaded.js'
 import { wishlist } from '../pages/wishlist.js'
+import { daysHistory } from '../pages/daysHistory.js'
 
 export const pages = {
   onboarding, main, recap, settings, planCreator, taskCreator, tasksArchive,
-  taskInfo, periodCreator, debugPage, reloaded, wishlist
+  taskInfo, periodCreator, debugPage, reloaded, wishlist, daysHistory
 };

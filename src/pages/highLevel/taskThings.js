@@ -1,8 +1,9 @@
 import {
   getToday, oneDay, normalizeDate, getTextDate, isCustomPeriod
 } from './periods.js'
+import { taskHistory } from './taskHistory.js'
 import { reloadApp } from '../../utils/appState.js'
-import { renderToggler, toggleFunc } from '../../ui/toggler.js';
+import { renderToggler, toggleFunc } from '../../ui/toggler.js'
 
 /**
  * @callback completeCallback Calls after task complete button clicked
@@ -34,10 +35,10 @@ export function renderTask(globals, task, page, {
   });
   if (deleteTask) buttons.push({
     emoji: emjs.trashCan, title: 'Delete task', aria: `Delete task: ${task.name}`,
-    func: onTaskDeleteClick, args: { globals, page }
+    func: onTaskDeleteClick, args: { globals }
   });
   if (completeTask) buttons.push({
-    emoji: emjs[task.history.at(-1) ? 'sign' : 'blank'],
+    emoji: emjs[taskHistory.getLastValue(task) ? 'sign' : 'blank'],
     title: markTitle(), aria: markTitle(task.name),
     func: onTaskCompleteClick, args: { globals, customDay, completeCallback }
   });
@@ -46,7 +47,7 @@ export function renderTask(globals, task, page, {
   );
   return renderToggler({
     name: task.name, id: task.id, body, buttons, page,
-    value: completeTask ? task.history.at(-1) : null,
+    value: completeTask ? taskHistory.getLastValue(task) : null,
     onBodyClick: openTask ? openTaskInfo : null, args: { globals }
   });
 }
@@ -57,9 +58,10 @@ function onTaskEditClick({elem, globals}) {
   globals.paintPage('taskCreator', { params: { id } });
 }
 
-async function onTaskDeleteClick({elem, globals, page}) {
+async function onTaskDeleteClick({elem, globals}) {
   await editTask({
     globals, id: elem.dataset.id, field: 'deleted', onConfirm: () => {
+      const page = elem.parentElement;
       elem.remove();
       if (!page.children.length) showNoTasks(page);
     }
@@ -86,9 +88,8 @@ async function onTaskCompleteClick({
     pageName: 'main'
   });
   const value = toggleFunc({e, elem});
-  td.history.pop();
-  td.history.push(value);
-  day.tasks[td.priority][td.id] = value;
+  taskHistory.updateValue(td, value);
+  day.tasks[td.special || 'regular'][td.priority][td.id] = value;
   day.afterDayEndedProccessed = false;
   await globals.db.set('tasks', td);
   await globals.db.set('days', day);
@@ -156,50 +157,4 @@ export function getTaskRestoreInfo(task, isShort) {
     canRestore ? task.special ? `until ${getTextDate(borderDate)}` : 'later' : ''
   }`;
   return { canRestore: canRestore && restoreNow, restoreText };
-}
-
-export function isHistoryAvailable(task) {
-  if (task.special && task.period.length == 1) return false;
-  if (task.history.length) return true;
-  return undefined;
-}
-
-export function borderValues(value) {
-  value--;
-  if (value == -1) return 6;
-  if (value == 6) return -1;
-  return value;
-}
-
-export async function getHistory({task, onEmptyDays, onBlankDay, onActiveDay}) {
-  const creationDay = normalizeDate(task.created || task.id);
-  const startDay = new Date(creationDay > task.periodStart ? creationDay : task.periodStart);
-  let day = normalizeDate(startDay);
-  const emptyDays = borderValues(startDay.getDay());
-  if (onEmptyDays) for (let i = emptyDays; i > 0; i--) {
-    onEmptyDays(day - oneDay * i);
-  }
-  let periodCursor = creationDay > task.periodStart ? new Date(creationDay).getDay() : 0;
-  let hardUpdate = false;
-  const addValue = () => {
-    periodCursor++;
-    hardUpdate = false;
-    day += oneDay;
-    if (periodCursor >= task.period.length) {
-      periodCursor = 0;
-      hardUpdate = true;
-    }
-  };
-  for (let item of task.history) {
-    while (!task.period[periodCursor]) {
-      if (onBlankDay) onBlankDay(day);
-      addValue();
-    }
-    await onActiveDay(day, item); addValue();
-  }
-  periodCursor = borderValues(periodCursor + 1);
-  while (periodCursor <= task.periodDay && !hardUpdate && !task.period[task.periodDay]) {
-    if (onBlankDay) onBlankDay(day);
-    addValue();
-  }
 }

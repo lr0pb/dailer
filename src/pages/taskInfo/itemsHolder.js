@@ -1,6 +1,7 @@
 import { getToday, oneDay, getTextDate, isCustomPeriod } from '../highLevel/periods.js'
 import { getTaskRestoreInfo } from '../highLevel/taskThings.js'
 import { qs } from '../../utils/dom.js'
+import { taskHistory } from '../highLevel/taskHistory.js';
 
 export function getPeriodsData(task) {
   let activeDays = 0;
@@ -8,7 +9,7 @@ export function getPeriodsData(task) {
   const periodsInWeek = 7 / task.period.length;
   return {
     periodsInWeek, daysInWeek: activeDays * periodsInWeek,
-    runnedPeriods: task.history.length / activeDays
+    runnedPeriods: periodsInWeek * (getToday() - task.periodStart) / (7 * oneDay)
   };
 }
 
@@ -23,23 +24,23 @@ function createInfoRect(emoji, text, color, coef = 1, isLined) {
   qs('.itemsHolder').innerHTML += elem;
 }
 
-export function renderItemsHolder({task, periods, priorities, iha}) {
+export function renderItemsHolder({task, periods, priorities, ihs}) {
   const { daysInWeek, periodsInWeek, runnedPeriods } = getPeriodsData(task);
-  const showQS = iha && runnedPeriods >= periodsInWeek && !task.disabled;
+  const showQS = ihs && runnedPeriods >= periodsInWeek;
   const untilComplete = task.special == 'untilComplete';
   const oneTime = task.special == 'oneTime';
   const { canRestore, restoreText } = getTaskRestoreInfo(task, true);
 
-  getTitle({task, periods, untilComplete, oneTime, iha, showQS, canRestore});
+  getTitle({task, periods, untilComplete, oneTime, ihs, showQS, canRestore});
   getActive({task, untilComplete});
   getImportance({task, priorities});
   getQuickStats({task, showQS, daysInWeek});
-  getCompleted({task, iha});
+  getCompleted({task, ihs});
   getRestore({task, canRestore, restoreText});
 }
 
 function getTitle({
-  task, periods, untilComplete, oneTime, iha, showQS, canRestore
+  task, periods, untilComplete, oneTime, ihs, showQS, canRestore
 }) {
   const rawTitle = periods[task.periodId].title;
   const perTitle = isCustomPeriod(task.periodId)
@@ -56,7 +57,7 @@ function getTitle({
   let titleCoef;
   if (untilComplete) titleCoef = canRestore ? 1 : 2;
   else if (oneTime && canRestore) titleCoef = 1;
-  else if ((!iha && !task.disabled) || showQS) titleCoef = 1;
+  else if ((!ihs && !task.disabled) || showQS) titleCoef = 1;
   else titleCoef = 2;
   const isNarrow = (untilComplete || (oneTime && task.disabled)) && !canRestore;
   createInfoRect(emjs.calendar, periodText, 'blue', titleCoef, isNarrow);
@@ -81,28 +82,25 @@ function getImportance({task, priorities}) {
 
 function getQuickStats({task, showQS, daysInWeek}) {
   if (!showQS) return;
-  const quickStats = {
-    amount: Math[task.period[task.periodDay] ? 'ceil' : 'floor'](daysInWeek),
-    completed: 0, done: false
-  };
-  for (let i = 1; i < quickStats.amount + 1; i++) {
-    if (task.history.at(-1 * i)) quickStats.completed++;
-  }
-  if (quickStats.completed == quickStats.amount) quickStats.done = true;
+  const isMaxStreak = task.streak == task.maxStreak;
+  const d = task.disabled;
   createInfoRect(
-    emjs[quickStats.done ? 'party' : 'chartUp'],
-    `In last 7 days you complete task ${quickStats.completed}/${quickStats.amount} times`,
-    quickStats.done ? 'green' : 'blue'
+    emjs[d ? 'trophy' : isMaxStreak ? 'party' : 'chartUp'],
+    `${d ? 'In prime y' : 'Y'}ou complete task ${
+      task.streak + 1 * (taskHistory.getLastValue(task) === 1 ? 1 : 0)
+    } times in a row${!d && isMaxStreak ? '!' : ''}`,
+    d ? 'yellow' : isMaxStreak ? 'red' : 'blue'
   );
 }
 
-function getCompleted({task, iha}) {
-  if (iha) return;
+function getCompleted({task, ihs}) {
+  if (ihs) return;
+  const isCompleted = task.history.run[0];
   let emoji = emjs.cross, color = 'red';
-  if (task.history[0]) emoji = emjs.sign, color = 'green';
+  if (isCompleted) emoji = emjs.sign, color = 'green';
   createInfoRect(emoji, `Task ${
     task.history.length && task.disabled ? 'was' : 'is'
-  } ${task.history[0] ? '' : 'not '}completed`, color);
+  } ${isCompleted ? '' : 'not '}completed`, color);
 }
 
 function getRestore({task, canRestore, restoreText}) {

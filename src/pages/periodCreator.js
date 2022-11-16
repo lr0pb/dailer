@@ -160,7 +160,8 @@ function appendDays(originalDays, getWeekStart) {
       elem.tabIndex = dailerData.focusgroup ? (i == 0 ? 0 : -1) : 0;
     }
     elem.innerHTML += `
-      <h4>${days ? emjs[days[i] ? 'sign' : 'blank'] : emjs.blank}</h4><h3>${dayNames[i]}</h3>
+      <h4>${days ? emjs[days[i] ? 'sign' : 'blank'] : emjs.blank}</h4>
+      <h3 class="notBreak">${dayNames[i]}</h3>
     `;
     makeExpandable(elem, 'hided');
     hm.append(elem);

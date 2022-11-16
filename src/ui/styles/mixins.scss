@@ -26,9 +26,9 @@
   flex-wrap: wrap;
 }
 
-@mixin text {
+@mixin text($font) {
   margin: 0;
-  font-family: Arial, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  font-family: $font, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   -webkit-user-select: none;
   user-select: none;
   font-synthesis: none;

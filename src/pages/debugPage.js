@@ -14,8 +14,8 @@ export const debugPage = {
       <div class="content">
         <!--<button id="toRecap" class="noEmoji">Show recap page</button>
         <h3>Reload app and show Yesterday recap page</h3>-->
-        <button id="clearSettings" class="danger noEmoji">Clear some settings</button>
-        <h3>You probably can lose everything</h3>
+        <button id="deleteAll" class="danger noEmoji">Delete all</button>
+        <h3>Just delete everything you have ${emjs.salute}</h3>
       </div>
     </div>
   `},
@@ -67,13 +67,34 @@ async function renderPage({globals, page}) {
     delete localStorage.recaped;
     await reloadApp(globals);
   });*/
-  qs('#clearSettings').addEventListener('click', async () => {
+  /*qs('#clearSettings').addEventListener('click', async () => {
     //await globals.db.deleteAll('settings');
     await globals.db.delete('settings', 'notifications');
     await globals.db.update('settings', 'session', (session) => {
       session.onboarded = false;
     });
     await reloadApp(globals, 'onboarding');
+  });
+  qs('#reloadTasks').addEventListener('click', async () => {
+    const tasks = await globals.db.getAll('tasks');
+    const days = await globals.db.getAll('days');
+    for (const task of tasks) {
+      task.history = {};
+      const type = task.special || 'regular';
+      for (const day of days) {
+        for (const priopity of day.tasks[type]) {
+          if (Object.keys(priopity).includes(task.id)) {
+            // bruh, in this moment i understand that all this was dumb
+          }
+        }
+      }
+    }
+  });*/
+  qs('#deleteAll').addEventListener('click', () => {
+    const stores = globals.db.db.objectStoreNames;
+    for (let store of stores) {
+      globals.db.deleteAll(store);
+    }
   });
 }
 

@@ -1,5 +1,5 @@
-import { getToday, oneDay } from '../highLevel/periods.js'
-import { borderValues, getHistory } from '../highLevel/taskThings.js'
+import { getRawDate, getMonthLastDate, oneDay } from '../highLevel/periods.js'
+import { borderValues, getMonthId, taskHistory } from '../highLevel/taskHistory.js'
 import { qs, handleKeyboard } from '../../utils/dom.js'
 
 const formatter = {
@@ -30,7 +30,7 @@ function onHistoryDayClick(e) {
   const target = e.target.dataset.day
   ? e.target : e.target.parentElement.dataset.day
   ? e.target.parentElement : e.target.parentElement.parentElement;
-  if (!target.role) return;
+  if (!target.hasAttribute('role')) return;
   const date = new Date(Number(target.dataset.day));
   if (target.classList.contains('selectedDay')) {
     target.classList.remove('selectedDay');
@@ -62,55 +62,49 @@ function getWeekendDays(date, month) {
   return days;
 }
 
+function getAdditionalDayTime(m, i) {
+  const sign = m == 2 ? -1 : m == 9 ? 1 : 0;
+  const useSign = (m == 2 && i == 26) || (m == 9 && i == 29) ? 1 : 0;
+  return oneDay + useSign * sign * oneDay / 24;
+}
+
 function renderEmptyDays(hm, count, firstDay) {
+  const firstDate = new Date(firstDay);
+  const day = firstDate.getDate();
+  const m = firstDate.getMonth();
   for (let i = 0; i < count; i++) {
-    const date = firstDay ? firstDay + oneDay * i : null;
+    const date = firstDay ? firstDay + getAdditionalDayTime(m, day + i) : null;
     hm.text += `
       <h4 ${firstDay ? `data-day="${date}"` : ''} class="darkText">${
-        firstDay ? new Date(date).getDate() : ' '
+        firstDay ? day + i : ' '
       }</h4>
     `;
   }
 }
 
 function init(date, hm) {
+  date = new Date(date);
   const month = date.getMonth();
   const year = date.getFullYear();
   const resp = { month, year };
-  const monthId = `${month}-${year}`;
-  if (
-    !hm.elem ||
-    hm.elem.parentElement.parentElement.dataset.month !== monthId
-  ) {
-    const monthResp = createMonth(date, monthId);
-    hm.container = monthResp.container;
-    hm.elem = monthResp.elem;
-    hm.text = '';
-    const firstMonthDay = new Date(year, month, 1);
-    if (firstMonthDay.getTime() !== date.getTime()) {
-      const beforeMonthDays = borderValues(firstMonthDay.getDay());
-      renderEmptyDays(hm, beforeMonthDays);
-    }
-    renderEmptyDays(hm, date.getDate() - 1, 1);
-    const emptyDays = borderValues(date.getDay());
-    let rwd = null; // remainingWeekendDays
-    if (date.getDate() !== 1) {
-      rwd = getWeekendDays(date, month);
-      /*const firstWeekendDay = new Date(rwd.at(-1)).getDay();
-      renderEmptyDays(hm, borderValues(firstWeekendDay));
-      for (let i = 1; i < rwd.length + 1; i++) {
-        const weekendDay = new Date(rwd.at(-1 * i));
-        hm.innerHTML += `<h4 style="opacity: 0.25;">${weekendDay.getDate()}</h4>`
-        if (weekendDay.getDay() == 0 && i !== rwd.length) {
-          renderEmptyDays(hm, 5);
-        }
-      }*/
-    }
-    if (
-      /*(rwd && rwd[0] + oneDay !== date.getTime()) ||*/ !rwd
-    ) renderEmptyDays(hm, emptyDays);
-    resp.isFirstDay = true;
+  const monthId = getMonthId({month, year});
+  const monthResp = createMonth(date, monthId);
+  hm.container = monthResp.container;
+  hm.elem = monthResp.elem;
+  hm.text = '';
+  const firstMonthDay = new Date(year, month, 1);
+  if (firstMonthDay.getTime() !== date.getTime()) {
+    const beforeMonthDays = borderValues(firstMonthDay.getDay());
+    renderEmptyDays(hm, beforeMonthDays);
   }
+  renderEmptyDays(hm, date.getDate() - 1, 1);
+  const emptyDays = borderValues(date.getDay());
+  let rwd = null; // remainingWeekendDays
+  if (date.getDate() !== 1) {
+    rwd = getWeekendDays(date, month);
+  }
+  if (!rwd) renderEmptyDays(hm, emptyDays);
+  resp.isFirstDay = true;
   return resp;
 }
 
@@ -119,55 +113,39 @@ const buttonable = (tabIndex) => `role="button" tabindex="${tabIndex ? 0 : -1}"`
 export async function renderHistory(task) {
   const history = qs('#history');
   const hm = {};
-  const initial = (date) => {
-    date = new Date(date);
-    const { month, year, isFirstDay } = init(date, hm);
-    const isToday = date.getTime() == getToday();
-    const lastMonthDate = new Date(year, month + 1, 0).getTime();
-    return {
-      tabIndex: dailerData.focusgroup ? isFirstDay || isToday : true,
-      isToday, lastMonthDate, isLastDay: lastMonthDate == date.getTime()
-    };
-  };
-  const after = (date, resp) => {
-    const daysToEnd = (resp.lastMonthDate - date) / oneDay;
-    const isEndDate = date == task.endDate;
-    if (resp.isToday || isEndDate) {
-      renderEmptyDays(hm, daysToEnd, date + oneDay);
-    }
-    if (resp.isToday || resp.isLastDay || isEndDate) {
-      hm.elem.innerHTML = hm.text;
-      history.append(hm.container);
-      hm.text = '';
-    }
-  };
-  await getHistory({
-    task,
-    onBlankDay: (date) => {
-      const resp = initial(date);
+  const lastMonth = taskHistory.getLastMonth(task);
+  let date = null;
+  for (const monthId in task.history) {
+    if (!date) date = getRawDate(monthId);
+    const { month: m, year: y } = init(date, hm);
+    const month = task.history[monthId];
+    for (let i = 0; i < month.length; i++) {
+      const value = month[i];
+      const isToday = monthId == lastMonth && i + 1 == month.length;
+      const tabIndex = dailerData.focusgroup ? !i || isToday : true;
       hm.text += `
-        <h4 data-day="${date}" class="darkText${
-         resp.isToday ? ' today' : ''
-        }" ${buttonable(resp.tabIndex)}>${
-          new Date(date).getDate()
+        <h4 data-day="${date}" class="${[2, 3].includes(value) ? 'darkText' : ''}${
+          isToday ? ' today' : ''
+        }" ${value == 3 ? '' : buttonable(tabIndex)}>${
+          [2, 3].includes(value) ? i + 1 : `
+            <div class="historyDay" style="--color: var(--accent${
+              value ? 'Green' : 'Red'
+            }RGB);">${emjs[value ? 'sign' : 'cross']}</div>
+          `
         }</h4>
       `;
-      after(date, resp);
-    },
-    onActiveDay: (date, item) => {
-      const resp = initial(date);
-      hm.text += `
-        <h4 data-day="${date}"${
-          resp.isToday ? ` class="today"` : ''
-        } ${buttonable(resp.tabIndex)}>
-          <div class="historyDay"style="--color: var(--accent${
-            item ? 'Green' : 'Red'
-          }RGB);">${emjs[item ? 'sign' : 'cross']}</div>
-        </h4>
-      `;
-      after(date, resp);
+      date += getAdditionalDayTime(m, i);
     }
-  });
+    const lastMonthDate = getMonthLastDate(m, y);
+    console.log(lastMonthDate);
+    console.log(date);
+    const daysToEnd = (lastMonthDate - date) / oneDay;
+    console.log(daysToEnd);
+    renderEmptyDays(hm, daysToEnd, date);
+    hm.elem.innerHTML = hm.text;
+    history.append(hm.container);
+    hm.text = '';
+  }
   qs('#history > div:last-child').scrollIntoView();
   qs('.content > :first-child').scrollIntoView();
 }

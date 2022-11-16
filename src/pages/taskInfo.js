@@ -1,6 +1,6 @@
 import { qs, getElements } from '../utils/dom.js'
 import { syncGlobals } from '../utils/appState.js'
-import { isHistoryAvailable } from './highLevel/taskThings.js'
+import { taskHistory } from './highLevel/taskHistory.js'
 import { renderItemsHolder, getPeriodsData } from './taskInfo/itemsHolder.js'
 import { renderHistory } from './taskInfo/history.js'
 
@@ -30,8 +30,8 @@ export const taskInfo = {
     const priorities = await globals.getList('priorities');
     qs('#infoBackground h4').innerHTML = td.name;
     qs('.itemsHolder').innerHTML = '';
-    const iha = isHistoryAvailable(td);
-    renderItemsHolder({task: td, periods, priorities, iha});
+    const ihs = taskHistory.isSupported(td);
+    renderItemsHolder({task: td, periods, priorities, ihs});
   },
   onSettingsUpdate: ({globals}) => { syncGlobals(globals); },
   onBack: (globals) => {
@@ -62,13 +62,14 @@ async function renderTaskInfo({globals, page, params}) {
   const priorities = await globals.getList('priorities');
   if (!task.deleted) {
     edit.classList.remove('hidedUI');
-    edit.addEventListener('click', () => {
+    edit.addEventListener('click', async () => {
       if (!globals.pageInfo) syncGlobals(globals);
       globals.pageInfo.taskAction = 'edit';
-      globals.paintPage('taskCreator', { dontClearParams: true });
+      await globals.paintPage('taskCreator', { dontClearParams: true });
     });
   }
-  const iha = isHistoryAvailable(task);
+  const iha = taskHistory.isAvailable(task);
+  const ihs = taskHistory.isSupported(task);
   const isa = isStatsAvailable(task);
   const base = (cl) => `
     <div class="${cl}">
@@ -123,7 +124,7 @@ async function renderTaskInfo({globals, page, params}) {
       res();
     })
   ]);*/
-  renderItemsHolder({task, periods, priorities, iha});
+  renderItemsHolder({task, periods, priorities, ihs});
   if (iha) await renderHistory(task);
 }
 

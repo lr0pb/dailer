@@ -5,13 +5,12 @@
   @include fullComponent(1);
 
   & > div {
-    margin: -0.6rem auto 0.8rem 1rem;
+    margin: -0.1rem auto 0.8rem 1rem;
     text-align: left;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    @include columnFlex();
+    @include justifyFlex();
   }
-  & h2 { margin: 1.5rem auto 0 1rem; }
+  & h2 { margin: 1rem auto 0 1rem; }
   & > :last-child { margin-right: 0.5rem; }
   .customBgContainer & {
     --blur: 12px;

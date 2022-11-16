@@ -84,7 +84,7 @@ export function handleKeyboard(elem, noBubbeling) {
 }
 
 const focusables = [
-  'button:not(:disabled)', 'input:not(:disabled)', '[role="button"]:not([disabled])'
+  'button', 'input', '[role="button"]'
 ].join(', ');
 
 export const inert = {

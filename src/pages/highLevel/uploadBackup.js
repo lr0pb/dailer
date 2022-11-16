@@ -2,7 +2,7 @@ import { globQs as qs, globQsa as qsa, show, hide } from '../../utils/dom.js'
 import { getToday, oneDay, intlDate, isCustomPeriod } from './periods.js'
 import { createPeriod } from '../periodCreator.js'
 import { createTask } from '../taskCreator.js'
-import { isHistoryAvailable, getHistory } from './taskThings.js'
+import { getHistory, taskHistory } from './taskHistory.js'
 
 export async function uploadData(globals, paintPeriods) {
   const chooser = qs('#chooseFile');
@@ -10,20 +10,19 @@ export async function uploadData(globals, paintPeriods) {
   chooser.addEventListener('change', () => {
     chooser.disabled = true;
     const file = chooser.files[0];
-    if (!file.name.includes('.dailer')) return globals.message({
-      state: 'fail', text: 'Wrong file choosed'
-    });
     const reader = new FileReader();
     reader.readAsText(file);
     reader.onload = async () => {
-      const data = JSON.parse(reader.result);
-      if (typeof data !== 'object') return globals.message({
-        state: 'fail', text: 'Unknown file content'
-      });
-      const cr = data.dailer_created;
-      if ( !cr || (cr !== getToday()) ) return globals.message({
-        state: 'fail', text: `You must upload today's created backup`
-      });
+      try {
+        const data = JSON.parse(reader.result);
+        if (typeof data !== 'object') throw new Error();
+        const createdAt = data.dailer_created;
+        if (!createdAt) throw new Error();
+      } catch (err) {
+        return globals.message({
+          state: 'fail', text: 'Unknown file content'
+        });
+      }
       await uploading(globals, data);
       await paintPeriods(globals);
       qs(`[data-section="manageData"]`).scrollIntoView();
@@ -33,6 +32,7 @@ export async function uploadData(globals, paintPeriods) {
 }
 
 export async function uploading(globals, data) {
+  return;
   qsa('.beforeUpload').forEach(hide);
   qsa('.uploadUI').forEach(show);
   const session = await globals.db.get('settings', 'session');
@@ -68,7 +68,7 @@ export async function uploading(globals, data) {
   }
   for (let i = 0; i < tasks.length; i++) {
     const task = tasks[i];
-    const iha = isHistoryAvailable(task);
+    const iha = taskHistory.isAvailable(task);
     const onActiveDay = async (date, item) => {
       const day = days[date];
       if (!day) return;

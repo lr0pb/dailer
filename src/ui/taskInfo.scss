@@ -27,7 +27,7 @@
 }
 
 .infoRect {
-  width: calc(var(--fullWidth) * var(--coef) / 2 - 3rem);
+  width: calc(var(--fullWidth) * var(--coef) / 2 - 3.01rem);
   min-height: 24rem;
   background-color: var(--infoRectBg);
   background-image: linear-gradient(150deg, var(--color) -40%, transparent 40%);
