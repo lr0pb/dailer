@@ -1,7 +1,7 @@
 import {
   env,
   oneDay, getToday, isCustomPeriod,
-  setPeriodTitle, getMonthId, getHistory, enumerateDay, taskHistory
+  setPeriodTitle, enumerateDay, taskHistory
 } from './defaultFunctions.js'
 
 export async function updatePeriods() {
@@ -9,19 +9,15 @@ export async function updatePeriods() {
   await env.db.getAll('periods', (per) => { env.periods[per.id] = per; });
 }
 
-export async function createDay(today = getToday(), migration) {
+export async function createDay(today = getToday()) {
   if (!env.periods) await updatePeriods();
   if (!env.session) env.session = await env.db.get('settings', 'session');
   if (!env.session.firstDayEver) env.session.firstDayEver = today;
-  if (!migration && !env.session.isHistoryMigrated) {
-    env.session.firstDayEver >= 1664053200000 // 25.09.2022
-    ? env.session.isHistoryMigrated = true
-    : await migrateHistory();
-  }
-  let tasks = await processPreviousDays(today, migration);
+
+  let tasks = await processPreviousDays(today);
   let day = await env.db.get('days', today.toString());
   if (!day) await updateDisabledTasks();
-  if (migration || !day || day.lastTasksChange !== env.session.lastTasksChange) {
+  if (!day || day.lastTasksChange !== env.session.lastTasksChange) {
     day = getRawDay(today, !day);
   } else return isEmpty(day) ? { day: 'error' } : { day };
   if (!tasks) tasks = await getActiveTasks();
@@ -29,17 +25,10 @@ export async function createDay(today = getToday(), migration) {
     day.tasks[task.special || 'regular'][task.priority][task.id] = value;
     day.tasksAmount++;
   };
-  const monthDay = new Date(today).getDate();
   for (let task of tasks) {
     if (task.wishlist) continue;
     if (task.periodStart > today) continue;
-    const untilComplete = task.special == 'untilComplete';
-    if (migration) {
-      if (untilComplete && today !== task.endDate - oneDay) continue;
-      const value = taskHistory.isSupported(task)
-      ? task.history[migration.monthId]?.[monthDay - 1] : task.history.run[0];
-      if (value !== undefined && [0, 1].includes(value)) addTask(task, value);
-    } else if (day.firstCreation || taskHistory.isEmpty(task)) {
+    if (day.firstCreation || taskHistory.isEmpty(task)) {
       updateTask(task);
       if (!task.disabled) {
         const value = task.period[task.periodDay] ? 0 : 2;
@@ -53,15 +42,10 @@ export async function createDay(today = getToday(), migration) {
   }
   console.log(day);
   await env.db.set('days', day);
-  if (!migration) await env.db.set('settings', env.session);
   return day.tasksAmount === 0 ? { day: 'error', tasks } : { day, tasks };
 }
 
-async function processPreviousDays(today, migration) {
-  if (migration) {
-    console.log(`migration with ${today}`);
-    return migration.tasks;
-  }
+async function processPreviousDays(today) {
   const check = await checkLastDay(today);
   if (!check.check) {
     const resp = await createDay(check.dayBefore);
@@ -76,7 +60,7 @@ async function checkLastDay(day) {
   const dayBefore = new Date(
     day.getFullYear(), day.getMonth(), day.getDate() - 1
   ).getTime();
-  const check = env.session.firstDayEver == day
+  const check = env.session.firstDayEver == day.getTime()
   ? true
   : await env.db.get('days', dayBefore.toString());
   return { check, dayBefore };
@@ -218,7 +202,7 @@ function checkForAchivements(day) {
 
 export async function getYesterdayRecap() {
   const session = await env.db.get('settings', 'session');
-  if (session.recaped == getToday() || !session.isHistoryMigrated) return {
+  if (session.recaped == getToday()) return {
     response: { recaped: true }
   };
   const noShowResp = { response: { show: false } };
@@ -247,55 +231,6 @@ export async function getYesterdayRecap() {
     await env.db.set('days', day);
   }
   return { response, day };
-}
-
-async function migrateHistory() {
-  self.postMessage({ event: 'historyMigration', data: 0 });
-  const tasks = await env.db.getAll('tasks');
-  await Promise.all(
-    tasks.map((task) => new Promise(async (res) => {
-      migrateTask(task).then(res);
-    }))
-  );
-  await env.db.set('tasks', tasks);
-  self.postMessage({ event: 'historyMigration', data: 1 });
-  const days = await env.db.getAll('days');
-  for (const day of days) {
-    const date = Number(day.date);
-    await createDay(date, {
-      monthId: getMonthId({date}), tasks
-    });
-  }
-  env.session.isHistoryMigrated = true;
-  await env.db.set('settings', env.session);
-  self.postMessage({ event: 'historyMigration', data: 2 });
-}
-
-async function migrateTask(task) {
-  if (!taskHistory.isSupported(task)) {
-    return task.history = { run: task.history };
-  };
-  const history = {};
-  const setHistoryItem = (date, value = 2) => {
-    date = new Date(date);
-    const monthId = getMonthId({date});
-    if (!history[monthId]) {
-      history[monthId] = [];
-      taskHistory.fillStart(history, date, monthId);
-    }
-    history[monthId].push(value);
-  };
-  await getHistory({
-    task, onActiveDay: setHistoryItem, onBlankDay: setHistoryItem
-  });
-  let streak = 0;
-  let i = task.history.length - 1;
-  while (task.history[i] === 1) {
-    streak++; i--;
-  }
-  task.history = history;
-  task.streak = streak;
-  task.maxStreak = streak;
 }
 
 export async function checkBackupReminder() {

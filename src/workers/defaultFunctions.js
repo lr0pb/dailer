@@ -9,7 +9,7 @@ export {
   setPeriodTitle
 } from '../pages/highLevel/taskThings.js'
 export {
-  getMonthId, getHistory, enumerateDay, taskHistory
+  enumerateDay, taskHistory
 } from '../pages/highLevel/taskHistory.js'
 
 export const env = {

@@ -18,6 +18,7 @@ import {
 import { processSettings, toggleExperiments } from './pages/highLevel/settingsBackend.js'
 import { checkInstall } from './pages/main.js'
 import { toggleNotifReason } from './pages/settings/notifications.js'
+import { clearDatabase } from './pages/debugPage.js'
 
 if (!('at' in Array.prototype)) {
   function at(n) {
@@ -101,6 +102,7 @@ async function appEntryPoint(e) {
     timeLog.paintUnvisibles = performance.now() - timeLog.paintUnvisibles;
     timeLog.startApp = performance.now();
   }
+  await migrateData();
   dailerData.nav ? await startApp() : await renderAppState(e, false, globals);
   if (performance) {
     timeLog.startApp = performance.now() - timeLog.startApp;
@@ -122,6 +124,18 @@ function createDb() {
       showErrorsAsLogs: true
     }
   );
+}
+
+async function migrateData() {
+  const migrationDay = Number('{MIGRATION_DAY}');
+  const session = await globals.db.get('settings', 'session');
+  if (Number.isFinite(session.isHistoryMigrated)) return;
+  if (session.firstDayEver < migrationDay) {
+    await clearDatabase(globals);
+    session.firstDayEver = null;
+    session.isHistoryMigrated = 1;
+    await globals.db.set('settings', session);
+  }
 }
 
 async function startApp() {

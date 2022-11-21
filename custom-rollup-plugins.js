@@ -66,7 +66,8 @@ export function insertEnvVariables(dir) {
       const file = fs
         .readFileSync(fileName, 'utf8')
         .replace('{VERSION}', `${version}${isDev ? '-dev' : ''}`)
-        .replace(`'{IS_DEV}'`, isDev);
+        .replace(`'{IS_DEV}'`, isDev)
+        .replace(`{MIGRATION_DAY}`, 1668981600000); // 21.11.2022
       fs.writeFileSync(fileName, file);
     }
   };

@@ -49,18 +49,7 @@ async function updatePage({globals, page}) {
 }
 
 async function renderDay({globals, page}) {
-  const unregister = globals.worker.listen('historyMigration', (stage) => {
-    page.innerHTML = `
-      <h2 class="emoji">${emjs.fileBox}${emjs.eyes}</h2>
-      <h2>${
-        !stage
-        ? 'dailer migrate your history data to the new format...'
-        : stage == 1 ? 'Tasks was converted...' : 'Days was converted!'
-      }</h2>
-    `;
-  });
   const { day } = await globals.worker.call({ process: 'createDay' });
-  unregister();
   if (day == 'error') {
     page.innerHTML = `
       <h2 class="emoji">${emjs.magicBall}</h2>

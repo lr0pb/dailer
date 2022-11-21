@@ -1,7 +1,7 @@
 @import 'mixins.scss';
 
 h1, h2, h3, h4, p {
-  @include text(monospace);
+  @include text();
   letter-spacing: -0.02em;
 
   &:not(.notBreak) {
@@ -11,7 +11,7 @@ h1, h2, h3, h4, p {
 }
 
 p {
-  @include text(Arial);
+  @include text();
   letter-spacing: 0;
 }
 

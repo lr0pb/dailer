@@ -1,7 +1,7 @@
 @import 'mixins.scss';
 
 button {
-  @include text(monospace);
+  @include text();
   @include base(0, $bigRadius);
   $vertical: 1.5rem;
   $horizontal: 3rem;
