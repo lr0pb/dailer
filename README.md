@@ -2,6 +2,8 @@
 
 📑 Progressive web application for planing tasks for the day and analyze how you grow yourself over time
 
+> Dailer is temporarily disabled due to preparation for migration to React
+
 #### 📝 Features included:
 - Create periodically repeated or one time tasks
 - Manage history for each task

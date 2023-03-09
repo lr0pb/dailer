@@ -1,50 +1,28 @@
-# Workflow for deploying dailer to GitHub Pages
-name: Build and deploy dailer
+name: Deploy app
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+    branches: ['main']
   workflow_dispatch:
-
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
 
 # Allow one concurrent deployment
 concurrency:
-  group: "pages"
+  group: 'pages'
   cancel-in-progress: true
 
 jobs:
-  # Build dailer and deploy it
-  buildAndDeploy:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+      url: ${{ steps.deployment.outputs.url }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.x
-          cache: 'npm'
-      - name: Build dailer
-        run: |
-          npm ci
-          npm run build
-      - name: Setup Pages
-        uses: actions/configure-pages@v2
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          # Upload only build output folder
-          path: './out/'
-      - name: Deploy to GitHub Pages
+      - name: Deploy app to GitHub Pages
+        uses: lr0pb/deploy-pages@v1
         id: deployment
-        uses: actions/deploy-pages@v1
+        with:
+          output-dir: 'out'
